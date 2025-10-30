@@ -1,0 +1,48 @@
+{
+  "valid_decode_cases": [
+    {
+      "input": "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}",
+      "expected_level": 24,
+      "expected_type": "pistol",
+      "expected_manufacturer": "maliwan",
+      "expected_parts_count": 4
+    },
+    {
+      "input": "@Ugr$WBm/$!m!X=5&qXxA;nj3OOD#<4R",
+      "expected_level": 25,
+      "expected_type": "shotgun",
+      "expected_manufacturer": "jakobs",
+      "expected_parts_count": 3
+    }
+  ],
+  "valid_encode_cases": [
+    {
+      "input": "24, 0, 1, 50| 2, 3379|| {76} {2} {3}",
+      "expected_prefix": "@U"
+    },
+    {
+      "input": "25, 1, 2, 51| 2, 3380|| {77} {3} {4}",
+      "expected_prefix": "@U"
+    }
+  ],
+  "invalid_cases": [
+    {
+      "input": "@Uinvalid_code_format",
+      "expected_error": "Invalid Base85 format"
+    },
+    {
+      "input": "no_prefix_code",
+      "expected_error": "Missing @U prefix"
+    },
+    {
+      "input": "",
+      "expected_error": "Empty input"
+    }
+  ],
+  "performance_targets": {
+    "single_decode_max_ms": 1,
+    "single_encode_max_ms": 1,
+    "batch_100_max_ms": 5000,
+    "memory_overhead_percent": 20
+  }
+}

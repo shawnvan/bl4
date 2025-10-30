@@ -1,0 +1,26 @@
+# Sample Base85 item codes for testing
+# These are sample codes used for unit and integration testing
+
+# Valid pistol item
+@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}
+
+# Valid shotgun item
+@Ugr$WBm/$!m!X=5&qXxA;nj3OOD#<4R
+
+# Invalid Base85 code (for error testing)
+@Uinvalid_code_format
+
+# Long item code (for performance testing)
+@UabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+-;<=>?@^_`{/}~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+-;<=>?@^_`{/}~
+
+# Empty item (minimum viable)
+@UAA
+
+# Complex item with multiple parts
+@Uxyz123ABCdef456ghi789jkl012mno345pqr678stu901vwx234yz567890ABCD+EFGHijklmnOPQRSTuvwxyza
+
+# Item with special characters
+@U!@#$%^&*()_+-=[]{}|;':",./<>?~`@#$%^&*()_+-=[]{}|;':",./<>?~
+
+# Rickroll trigger code (for easter egg testing)
+@ULpqmPXim7T5VTCjgOjPCoKClxO6olJi2

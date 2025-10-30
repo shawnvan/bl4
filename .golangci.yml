@@ -1,0 +1,126 @@
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  funlen:
+    lines: 100
+    statements: 50
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+  gocognit:
+    min-complexity: 20
+  nestif:
+    min-complexity: 4
+  gomnd:
+    settings:
+      mnd:
+        check-return: false
+  gofumpt:
+    extra-rules: true
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/shawnvan/bl4)
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+        disabled: false
+        arguments:
+          - "checkPrivateReceivers"
+          - "sayRepetitiveInsteadOfStutters"
+
+linters:
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupimport
+    - errcheck
+    - exportloopref
+    - exhaustive
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - gofumpt
+    - goimports
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacer
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - rowserrcheck
+    - staticcheck
+    - stylecheck
+    - tenv
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+    - wrapcheck
+    - wsl
+
+issues:
+  exclude-rules:
+    - EXC0005 # TODO: Consider excluding this error when the interface is in external library
+
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  sort-results: true
+  sort-order:
+    - file
+    - linter
+    - severity
+    - message
+
+severity:
+  default-severity: error
+  case-sensitive: false
+
+exclude:
+  - web/
+  - docs/
+  - tests/
+  - vendor/
+  - .git/

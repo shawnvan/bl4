@@ -1,0 +1,24 @@
+{
+  "server": {
+    "port": 8080,
+    "read_timeout": "30s",
+    "write_timeout": "30s",
+    "max_header_bytes": 1048576
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "output": "stdout"
+  },
+  "features": {
+    "enable_bitstream": true,
+    "enable_batch_process": true,
+    "max_batch_size": 1000,
+    "enable_analysis": true
+  },
+  "performance": {
+    "max_concurrent_requests": 100,
+    "request_timeout": "10s",
+    "enable_metrics": false
+  }
+}
