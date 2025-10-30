@@ -1,0 +1,480 @@
+openapi: 3.0.3
+info:
+  title: BL4 Item Serial Code Codec API
+  description: Borderlands 4 物品序列码编解码工具的RESTful API
+  version: 1.0.0
+  contact:
+    name: BL4 Codec Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: 开发服务器
+
+paths:
+  /api/v1/decode:
+    post:
+      summary: 解码Base85物品序列码
+      description: 将Base85编码的物品序列码解码为结构化数据
+      operationId: decodeSerialCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecodeRequest'
+            examples:
+              standard:
+                summary: 标准解码请求
+                value:
+                  serial_code: "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+                  show_bitstream: false
+              with_bitstream:
+                summary: 包含比特流显示的解码请求
+                value:
+                  serial_code: "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+                  show_bitstream: true
+      responses:
+        '200':
+          description: 解码成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecodeResponse'
+              examples:
+                success:
+                  summary: 成功解码响应
+                  value:
+                    success: true
+                    item_data:
+                      level: 24
+                      type:
+                        type: "pistol"
+                        manufacturer: "maliwan"
+                      manufacturer: "maliwan"
+                      rarity: "legendary"
+                      parts:
+                        - index: 76
+                          subtype: 1
+                          value: 4
+                        - index: 2
+                          subtype: 1
+                          value: 3379
+                    bitstream: "0010000 10000100 00000000..."
+                    process_time: "156μs"
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/encode:
+    post:
+      summary: 编码结构化数据为Base85序列码
+      description: 将结构化的物品数据编码为Base85格式序列码
+      operationId: encodeStructuredData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EncodeRequest'
+            examples:
+              standard:
+                summary: 标准编码请求
+                value:
+                  structured_data: "24, 0, 1, 50| 2, 3379|| {76} {2} {3}"
+      responses:
+        '200':
+          description: 编码成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncodeResponse'
+              examples:
+                success:
+                  summary: 成功编码响应
+                  value:
+                    success: true
+                    serial_code: "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+                    process_time: "142μs"
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/batch/decode:
+    post:
+      summary: 批量解码Base85序列码
+      description: 同时处理多个Base85序列码的解码请求
+      operationId: batchDecodeSerialCodes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDecodeRequest'
+            examples:
+              small_batch:
+                summary: 小批量解码请求
+                value:
+                  serial_codes:
+                    - "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+                    - "@Ugr$WBm/$!m!X=5&qXxA;nj3OOD#<4R"
+                    - "@Uinvalid_code"
+                  show_bitstream: false
+      responses:
+        '200':
+          description: 批量处理完成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchDecodeResponse'
+              examples:
+                mixed_results:
+                  summary: 混合结果响应
+                  value:
+                    success: true
+                    results:
+                      - serial_code: "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+                        item_data:
+                          level: 24
+                          type:
+                            type: "pistol"
+                            manufacturer: "maliwan"
+                          parts:
+                            - index: 76
+                              subtype: 1
+                              value: 4
+                        error_message: ""
+                      - serial_code: "@Ugr$WBm/$!m!X=5&qXxA;nj3OOD#<4R"
+                        item_data:
+                          level: 25
+                          type:
+                            type: "shotgun"
+                            manufacturer: "jakobs"
+                          parts:
+                            - index: 77
+                              subtype: 1
+                              value: 5
+                        error_message: ""
+                    errors:
+                      - serial_code: "@Uinvalid_code"
+                        error_message: "Invalid Base85 format"
+                        position: 2
+                    process_time: "1.2ms"
+                    processed_count: 2
+                    error_count: 1
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: 批量大小超出限制
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/validate:
+    post:
+      summary: 验证Base85序列码格式
+      description: 验证Base85序列码的格式是否正确，不进行完整解码
+      operationId: validateSerialCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRequest'
+      responses:
+        '200':
+          description: 验证完成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateResponse'
+
+  /api/v1/health:
+    get:
+      summary: 健康检查
+      description: 检查API服务状态
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    DecodeRequest:
+      type: object
+      required:
+        - serial_code
+      properties:
+        serial_code:
+          type: string
+          description: Base85编码的物品序列码
+          minLength: 1
+          maxLength: 10240
+          pattern: "^@U"
+          example: "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+        show_bitstream:
+          type: boolean
+          description: 是否返回比特流数据
+          default: false
+
+    DecodeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 解码是否成功
+        item_data:
+          $ref: '#/components/schemas/ItemData'
+        bitstream:
+          type: string
+          description: 格式化的比特流数据（仅在show_bitstream为true时返回）
+        error_message:
+          type: string
+          description: 错误信息（仅在失败时返回）
+        process_time:
+          type: string
+          description: 处理时间
+          example: "156μs"
+
+    EncodeRequest:
+      type: object
+      required:
+        - structured_data
+      properties:
+        structured_data:
+          type: string
+          description: 结构化的物品数据字符串
+          minLength: 1
+          maxLength: 2048
+          example: "24, 0, 1, 50| 2, 3379|| {76} {2} {3}"
+
+    EncodeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 编码是否成功
+        serial_code:
+          type: string
+          description: Base85编码的序列码
+          example: "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+        error_message:
+          type: string
+          description: 错误信息（仅在失败时返回）
+        process_time:
+          type: string
+          description: 处理时间
+          example: "142μs"
+
+    BatchDecodeRequest:
+      type: object
+      required:
+        - serial_codes
+      properties:
+        serial_codes:
+          type: array
+          items:
+            type: string
+            pattern: "^@U"
+          minItems: 1
+          maxItems: 1000
+          description: Base85序列码数组
+        show_bitstream:
+          type: boolean
+          description: 是否返回比特流数据
+          default: false
+
+    BatchDecodeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 批量处理是否成功
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecodeResult'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchError'
+        process_time:
+          type: string
+          description: 总处理时间
+        processed_count:
+          type: integer
+          description: 成功处理的数量
+        error_count:
+          type: integer
+          description: 失败的数量
+
+    DecodeResult:
+      type: object
+      properties:
+        serial_code:
+          type: string
+          description: 原始序列码
+        item_data:
+          $ref: '#/components/schemas/ItemData'
+        bitstream:
+          type: string
+          description: 比特流数据
+        error_message:
+          type: string
+          description: 错误信息
+
+    BatchError:
+      type: object
+      properties:
+        serial_code:
+          type: string
+          description: 出错的序列码
+        error_message:
+          type: string
+          description: 错误信息
+        position:
+          type: integer
+          description: 在批次中的位置
+
+    ValidateRequest:
+      type: object
+      required:
+        - serial_code
+      properties:
+        serial_code:
+          type: string
+          description: 待验证的Base85序列码
+          pattern: "^@U"
+
+    ValidateResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: 格式是否有效
+        error_message:
+          type: string
+          description: 错误信息（如果无效）
+
+    ItemData:
+      type: object
+      properties:
+        level:
+          type: integer
+          description: 物品等级
+          minimum: 1
+          maximum: 100
+        type:
+          $ref: '#/components/schemas/ItemType'
+        manufacturer:
+          type: string
+          description: 制造商
+        rarity:
+          type: string
+          description: 稀有度
+          enum: ["common", "uncommon", "rare", "epic", "legendary"]
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Part'
+          description: 零件列表
+
+    ItemType:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 物品类型
+        manufacturer:
+          type: string
+          description: 制造商
+        base_barrel:
+          type: string
+          description: 基础枪管类型
+
+    Part:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: 零件索引
+          minimum: 0
+        subtype:
+          type: integer
+          description: 子类型
+          enum: [0, 1, 2]
+        value:
+          type: integer
+          description: 整数值（subtype=1时）
+          minimum: 0
+        values:
+          type: array
+          items:
+            type: integer
+          description: 值列表（subtype=2时）
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: 错误类型
+        message:
+          type: string
+          description: 错误详情
+        timestamp:
+          type: string
+          format: date-time
+          description: 错误发生时间
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "unhealthy"]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          description: API版本
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

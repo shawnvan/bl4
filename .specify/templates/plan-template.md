@@ -31,7 +31,13 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### Required Compliance Gates
+
+- **[GATE]** Technical Documentation Verification: All technology choices and APIs verified using MCP current documentation
+- **[GATE]** Minimum Requirements Principle: Implementation plan contains only explicitly required features from specification
+- **[GATE]** TDD Readiness: Plan includes comprehensive testing strategy (unit, integration, contract tests)
+- **[GATE]** Quality Code Standards: Planned structure supports maintainable, well-documented code
+- **[GATE]** UX Consistency: Design approach follows established patterns (if UI components involved)
 
 ## Project Structure
 

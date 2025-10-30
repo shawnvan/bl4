@@ -85,10 +85,18 @@
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
+
+### Constitutional Requirements
+
+- **CR-001**: Implementation MUST follow Test-Driven Development (Red-Green-Refactor cycle)
+- **CR-002**: All technical decisions MUST be verified using current documentation via MCP
+- **CR-003**: Implementation MUST contain only explicitly specified features (no scope creep)
+- **CR-004**: Code MUST maintain high quality standards with clear documentation
+- **CR-005**: User interface MUST maintain consistency with established design patterns
 
 *Example of marking unclear requirements:*
 

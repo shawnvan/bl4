@@ -1,50 +1,99 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!-- Sync Impact Report:
+Version change: 0.0.0 → 1.0.0
+Modified principles: N/A (initial constitution)
+Added sections: Core Principles (5), Development Workflow, Quality Assurance, Governance
+Removed sections: N/A
+Templates requiring updates: ✅ plan-template.md (Constitution Check), ✅ tasks-template.md (TDD alignment), ✅ spec-template.md (requirements alignment), ⚠️ agent-file-template.md (general guidance), ⚠️ checklist-template.md (quality gates)
+Follow-up TODOs: None
+-->
+
+# BL4 Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. 高质量代码标准 (High-Quality Code Standards)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+必须保持高标准的代码质量、可读性和可维护性。要求清晰的代码结构、良好的文档、一致的格式，函数和组件必须单一职责且具有有意义的命名。代码审查必须确保遵循既定模式和最佳实践。
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: High-quality code is the foundation of maintainable software. This principle ensures long-term project viability and reduces technical debt.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. 用户体验一致性 (User Experience Consistency)
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+所有功能和交互的用户界面和体验必须保持一致。设计模式、配色方案、排版和交互行为必须遵循既定的设计系统，只有在功能规范明确要求时才允许变化。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: Consistent user experience reduces cognitive load and creates intuitive interactions that build user trust and satisfaction.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. 测试驱动开发（不可协商）(Test-Driven Development - Non-negotiable)
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+所有功能都必须采用测试驱动开发。必须严格遵循红绿重构循环：先写失败的测试 → 让测试通过 → 重构代码。必须包含全面的测试覆盖，包括单元测试和集成测试。
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: TDD ensures code quality, provides regression safety, and forces thoughtful design before implementation.
+
+### IV. 最小需求原则 (Minimum Requirements Principle)
+
+必须严格按照规范实现需求，不添加不必要的功能或未来扩展性。不包含明确需求之外的额外功能。如有模糊性或额外功能看似有益，必须事先获得确认。
+
+**Rationale**: Prevents scope creep and ensures focused delivery of actual user value without unnecessary complexity.
+
+### V. 技术文档验证（不可协商）(Technical Documentation Verification - Non-negotiable)
+
+在制定技术方案、选择第三方库时，必须使用MCP查询最新官方文档。所有函数调用、API使用模式和库集成必须根据当前文档进行验证。必须在编写实现代码之前对任何技术决策进行文档查询。
+
+**Rationale**: Ensures technical decisions are based on current, accurate information and prevents integration issues from outdated documentation assumptions.
+
+## Development Workflow
+
+### Requirements to Implementation Process
+
+1. **Specification Phase**: Clear user stories with measurable acceptance criteria
+2. **Planning Phase**: Technical research and design based on verified documentation
+3. **Task Generation**: Dependency-ordered tasks aligned with user story priorities
+4. **TDD Implementation**: Red-Green-Refactor cycle strictly enforced
+5. **Quality Gates**: Code review and testing validation before merge
+
+### Code Review Requirements
+
+- Must verify compliance with all constitutional principles
+- Must ensure TDD cycle was followed (failing tests exist before implementation)
+- Must validate technical decisions against current documentation
+- Must check for scope adherence (no extra features beyond specification)
+
+## Quality Assurance
+
+### Testing Requirements
+
+- **Unit Tests**: Must cover all business logic and edge cases
+- **Integration Tests**: Must verify component interactions and data flow
+- **Contract Tests**: Must validate external service integrations
+- **User Journey Tests**: Must verify complete user workflows independently
+
+### Code Quality Standards
+
+- Consistent formatting and naming conventions
+- Single responsibility principle for all functions and components
+- Clear documentation for complex logic
+- No hardcoded values without explicit justification
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+### Amendment Process
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+This constitution represents the non-negotiable standards for BL4 development. Amendments require:
+
+1. **Proposal**: Written proposal with specific changes and rationale
+2. **Review**: Impact assessment on existing codebase and workflows
+3. **Approval**: Consensus approval from project maintainers
+4. **Migration**: Plan for updating existing code and documentation
+5. **Communication**: Clear communication of changes to all contributors
+
+### Versioning Policy
+
+- **MAJOR**: Backward incompatible governance or principle changes
+- **MINOR**: New principles or expanded guidance sections
+- **PATCH**: Clarifications, wording improvements, non-semantic refinements
+
+### Compliance Review
+
+All pull requests and code reviews must explicitly verify compliance with current constitutional standards. Complexity beyond standard patterns must be justified in terms of specific user value delivered.
+
+**Version**: 1.0.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-10-30
