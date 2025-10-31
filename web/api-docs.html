@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BL4 Item Codec API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        .info-card h3 {
+            margin: 0 0 1rem 0;
+            color: #333;
+        }
+        .info-card p {
+            margin: 0;
+            color: #666;
+            line-height: 1.6;
+        }
+        .swagger-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-implemented {
+            background: #28a745;
+            color: white;
+        }
+        .status-pending {
+            background: #ffc107;
+            color: #212529;
+        }
+        .status-planned {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>BL4 Item Codec API</h1>
+        <p>Borderlands 4 Item Serial Code Decoder & Encoder Documentation</p>
+    </div>
+
+    <div class="container">
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>🚀 Quick Start</h3>
+                <p>This API provides comprehensive functionality for decoding and encoding Borderlands 4 item serial codes. Use the interactive documentation below to explore endpoints.</p>
+            </div>
+            <div class="info-card">
+                <h3>📊 Base URL</h3>
+                <p><strong>Development:</strong> http://localhost:8080<br>
+                <strong>Production:</strong> https://api.bl4.example.com</p>
+            </div>
+            <div class="info-card">
+                <h3>🔑 Authentication</h3>
+                <p>Currently, no authentication is required. Future versions may include API key authentication for rate limiting.</p>
+            </div>
+            <div class="info-card">
+                <h3>📝 Changelog</h3>
+                <p><strong>v1.0.0:</strong> Initial release with decode, encode, validate, and batch processing capabilities.</p>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <a href="/api/v1/docs" class="btn">View Raw API Docs</a>
+            <a href="/health" class="btn btn-secondary">Health Check</a>
+            <a href="/" class="btn btn-secondary">Web Interface</a>
+        </div>
+
+        <div class="swagger-container">
+            <div id="swagger-ui"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        // OpenAPI 3.0 Specification
+        const spec = {
+            "openapi": "3.0.3",
+            "info": {
+                "title": "BL4 Item Codec API",
+                "description": "Comprehensive API for decoding and encoding Borderlands 4 item serial codes. Features include real-time batch processing, validation, rate limiting, and detailed logging.",
+                "version": "1.0.0",
+                "contact": {
+                    "name": "BL4 Development Team",
+                    "email": "dev@bl4.example.com"
+                },
+                "license": {
+                    "name": "MIT",
+                    "url": "https://opensource.org/licenses/MIT"
+                }
+            },
+            "servers": [
+                {
+                    "url": "http://localhost:8080",
+                    "description": "Development server"
+                },
+                {
+                    "url": "https://api.bl4.example.com",
+                    "description": "Production server"
+                }
+            ],
+            "paths": {
+                "/health": {
+                    "get": {
+                        "summary": "Health check",
+                        "description": "Check the health status of the API service",
+                        "tags": ["Health"],
+                        "responses": {
+                            "200": {
+                                "description": "Service is healthy",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/HealthResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/health/readiness": {
+                    "get": {
+                        "summary": "Readiness check",
+                        "description": "Check if the service is ready to accept requests",
+                        "tags": ["Health"],
+                        "responses": {
+                            "200": {
+                                "description": "Service is ready",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/ReadinessResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "503": {
+                                "description": "Service is not ready"
+                            }
+                        }
+                    }
+                },
+                "/health/liveness": {
+                    "get": {
+                        "summary": "Liveness check",
+                        "description": "Check if the service is alive",
+                        "tags": ["Health"],
+                        "responses": {
+                            "200": {
+                                "description": "Service is alive",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/LivenessResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/api/v1/items/decode": {
+                    "post": {
+                        "summary": "Decode item serial code",
+                        "description": "Decode a Borderlands 4 item serial code into structured data",
+                        "tags": ["Items"],
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/DecodeRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Successfully decoded serial code",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/DecodeResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Invalid request or serial code"
+                            },
+                            "429": {
+                                "description": "Rate limit exceeded"
+                            }
+                        }
+                    }
+                },
+                "/api/v1/items/encode": {
+                    "post": {
+                        "summary": "Encode item data",
+                        "description": "Encode structured item data into a Borderlands 4 item serial code",
+                        "tags": ["Items"],
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/EncodeRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Successfully encoded item data",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/EncodeResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Invalid request or item data"
+                            }
+                        }
+                    }
+                },
+                "/api/v1/items/validate": {
+                    "post": {
+                        "summary": "Validate serial code",
+                        "description": "Validate a Borderlands 4 item serial code without decoding",
+                        "tags": ["Items"],
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ValidateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Validation result",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/ValidateResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Invalid request"
+                            }
+                        }
+                    }
+                },
+                "/api/v1/items/validate/batch": {
+                    "post": {
+                        "summary": "Batch validate serial codes",
+                        "description": "Validate multiple Borderlands 4 item serial codes",
+                        "tags": ["Items", "Batch"],
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/BatchValidateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Batch validation results",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/BatchValidateResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Invalid request"
+                            },
+                            "429": {
+                                "description": "Rate limit exceeded"
+                            }
+                        }
+                    }
+                },
+                "/api/v1/items/batch/decode": {
+                    "post": {
+                        "summary": "Batch decode serial codes",
+                        "description": "Decode multiple Borderlands 4 item serial codes with enhanced progress tracking",
+                        "tags": ["Items", "Batch"],
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/BatchDecodeRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Batch decode results",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/BatchDecodeResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Invalid request"
+                            },
+                            "429": {
+                                "description": "Rate limit exceeded"
+                            }
+                        }
+                    }
+                },
+                "/api/v1/items/batch/decode/enhanced": {
+                    "post": {
+                        "summary": "Enhanced batch decode with progress tracking",
+                        "description": "Decode multiple serial codes with real-time progress tracking and cancellation support",
+                        "tags": ["Items", "Batch", "Enhanced"],
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/BatchDecodeRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Enhanced batch decode results with progress tracking",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/EnhancedBatchDecodeResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Invalid request"
+                            },
+                            "429": {
+                                "description": "Rate limit exceeded"
+                            }
+                        }
+                    }
+                },
+                "/api/v1/docs": {
+                    "get": {
+                        "summary": "API documentation",
+                        "description": "Get comprehensive API documentation and endpoint information",
+                        "tags": ["Documentation"],
+                        "responses": {
+                            "200": {
+                                "description": "API documentation",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/APIDocumentation"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "components": {
+                "schemas": {
+                    "HealthResponse": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "example": "healthy"
+                            },
+                            "timestamp": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "uptime": {
+                                "type": "string",
+                                "example": "2h30m45s"
+                            },
+                            "version": {
+                                "type": "string",
+                                "example": "1.0.0"
+                            },
+                            "service": {
+                                "type": "string",
+                                "example": "bl4-item-codec"
+                            },
+                            "environment": {
+                                "type": "string",
+                                "example": "development"
+                            },
+                            "node": {
+                                "$ref": "#/components/schemas/NodeInfo"
+                            },
+                            "memory": {
+                                "$ref": "#/components/schemas/MemoryInfo"
+                            },
+                            "endpoints": {
+                                "$ref": "#/components/schemas/Endpoints"
+                            },
+                            "checks": {
+                                "$ref": "#/components/schemas/HealthChecks"
+                            }
+                        }
+                    },
+                    "NodeInfo": {
+                        "type": "object",
+                        "properties": {
+                            "hostname": {
+                                "type": "string"
+                            },
+                            "go_version": {
+                                "type": "string"
+                            },
+                            "go_os": {
+                                "type": "string"
+                            },
+                            "go_arch": {
+                                "type": "string"
+                            },
+                            "num_goroutine": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "MemoryInfo": {
+                        "type": "object",
+                        "properties": {
+                            "alloc_mb": {
+                                "type": "integer"
+                            },
+                            "total_alloc_mb": {
+                                "type": "integer"
+                            },
+                            "sys_mb": {
+                                "type": "integer"
+                            },
+                            "num_gc": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "Endpoints": {
+                        "type": "object",
+                        "properties": {
+                            "health": {
+                                "type": "string"
+                            },
+                            "readiness": {
+                                "type": "string"
+                            },
+                            "liveness": {
+                                "type": "string"
+                            },
+                            "decode": {
+                                "type": "string"
+                            },
+                            "encode": {
+                                "type": "string"
+                            },
+                            "validate": {
+                                "type": "string"
+                            },
+                            "batch_decode": {
+                                "type": "string"
+                            },
+                            "batch_validate": {
+                                "type": "string"
+                            },
+                            "docs": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "HealthChecks": {
+                        "type": "object",
+                        "properties": {
+                            "database": {
+                                "type": "string"
+                            },
+                            "memory": {
+                                "type": "string"
+                            },
+                            "cpu": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "ReadinessResponse": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": ["ready", "not_ready"]
+                            },
+                            "timestamp": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "uptime": {
+                                "type": "string"
+                            },
+                            "checks": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "LivenessResponse": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "example": "alive"
+                            },
+                            "timestamp": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "uptime": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "DecodeRequest": {
+                        "type": "object",
+                        "required": ["serial_code"],
+                        "properties": {
+                            "serial_code": {
+                                "type": "string",
+                                "description": "The BL4 item serial code to decode",
+                                "example": "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+                            },
+                            "options": {
+                                "$ref": "#/components/schemas/DecodeOptions"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "description": "Additional metadata for the request"
+                            }
+                        }
+                    },
+                    "DecodeOptions": {
+                        "type": "object",
+                        "properties": {
+                            "include_bitstream": {
+                                "type": "boolean",
+                                "description": "Include raw bitstream data in response"
+                            },
+                            "include_tokens": {
+                                "type": "boolean",
+                                "description": "Include individual parsed tokens"
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": ["structured", "json", "csv", "raw"],
+                                "description": "Desired output format"
+                            },
+                            "pretty_print": {
+                                "type": "boolean",
+                                "description": "Enable pretty-printing of JSON output"
+                            },
+                            "validate_only": {
+                                "type": "boolean",
+                                "description": "Only validate without full decoding"
+                            },
+                            "include_stats": {
+                                "type": "boolean",
+                                "description": "Include processing statistics"
+                            },
+                            "max_parts": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Maximum number of parts to decode"
+                            },
+                            "timeout": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Maximum processing time in milliseconds"
+                            }
+                        }
+                    },
+                    "EncodeRequest": {
+                        "type": "object",
+                        "required": ["item_data"],
+                        "properties": {
+                            "item_data": {
+                                "$ref": "#/components/schemas/ItemData"
+                            },
+                            "options": {
+                                "$ref": "#/components/schemas/EncodeOptions"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "description": "Additional metadata for the request"
+                            }
+                        }
+                    },
+                    "EncodeOptions": {
+                        "type": "object",
+                        "properties": {
+                            "format": {
+                                "type": "string",
+                                "enum": ["structured", "json", "csv"],
+                                "description": "Input format"
+                            },
+                            "validate_parts": {
+                                "type": "boolean",
+                                "description": "Validate each part before encoding"
+                            },
+                            "optimize_size": {
+                                "type": "boolean",
+                                "description": "Enable size optimization"
+                            },
+                            "include_prefix": {
+                                "type": "boolean",
+                                "description": "Include @U prefix in output"
+                            },
+                            "target_version": {
+                                "type": "string",
+                                "description": "Target BL4 version format"
+                            }
+                        }
+                    },
+                    "ValidateRequest": {
+                        "type": "object",
+                        "required": ["serial_code"],
+                        "properties": {
+                            "serial_code": {
+                                "type": "string",
+                                "description": "The BL4 item serial code to validate",
+                                "example": "@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"
+                            },
+                            "options": {
+                                "$ref": "#/components/schemas/ValidateOptions"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "description": "Additional metadata for the request"
+                            }
+                        }
+                    },
+                    "ValidateOptions": {
+                        "type": "object",
+                        "properties": {
+                            "strict_mode": {
+                                "type": "boolean",
+                                "description": "Enable strict validation rules"
+                            },
+                            "include_details": {
+                                "type": "boolean",
+                                "description": "Include detailed validation information"
+                            },
+                            "validate_structure": {
+                                "type": "boolean",
+                                "description": "Attempt to decode for structural validation"
+                            },
+                            "timeout": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Maximum validation time in milliseconds"
+                            }
+                        }
+                    },
+                    "BatchDecodeRequest": {
+                        "type": "object",
+                        "required": ["serial_codes"],
+                        "properties": {
+                            "serial_codes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 1,
+                                "maxItems": 1000,
+                                "description": "Array of serial codes to decode"
+                            },
+                            "options": {
+                                "$ref": "#/components/schemas/BatchDecodeOptions"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "description": "Additional metadata for the request"
+                            }
+                        }
+                    },
+                    "BatchDecodeOptions": {
+                        "type": "object",
+                        "properties": {
+                            "individual_options": {
+                                "$ref": "#/components/schemas/DecodeOptions"
+                            },
+                            "max_concurrency": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Maximum concurrent processing"
+                            },
+                            "fail_fast": {
+                                "type": "boolean",
+                                "description": "Stop on first error"
+                            },
+                            "report_progress": {
+                                "type": "boolean",
+                                "description": "Enable progress reporting"
+                            },
+                            "timeout": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Overall timeout in milliseconds"
+                            },
+                            "per_item_timeout": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Timeout per item in milliseconds"
+                            },
+                            "compact_output": {
+                                "type": "boolean",
+                                "description": "Use compact output format"
+                            }
+                        }
+                    },
+                    "BatchValidateRequest": {
+                        "type": "object",
+                        "required": ["serial_codes"],
+                        "properties": {
+                            "serial_codes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 1,
+                                "maxItems": 1000,
+                                "description": "Array of serial codes to validate"
+                            },
+                            "options": {
+                                "$ref": "#/components/schemas/ValidateOptions"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "description": "Additional metadata for the request"
+                            }
+                        }
+                    },
+                    "ItemData": {
+                        "type": "object",
+                        "required": ["level", "type", "manufacturer"],
+                        "properties": {
+                            "level": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "description": "Item level (1-100)",
+                                "example": 24
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "Item type",
+                                "example": "pistol"
+                            },
+                            "manufacturer": {
+                                "type": "string",
+                                "description": "Item manufacturer",
+                                "example": "maliwan"
+                            },
+                            "parts": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/PartData"
+                                },
+                                "description": "Item parts/components"
+                            },
+                            "raw_parts": {
+                                "type": "string",
+                                "description": "Raw parts string for backward compatibility"
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Item name"
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Item description"
+                            },
+                            "rarity": {
+                                "type": "string",
+                                "description": "Item rarity"
+                            },
+                            "game_version": {
+                                "type": "string",
+                                "description": "Game version"
+                            },
+                            "properties": {
+                                "type": "object",
+                                "description": "Additional item properties"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "description": "Item metadata"
+                            }
+                        }
+                    },
+                    "PartData": {
+                        "type": "object",
+                        "properties": {
+                            "index": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Part index",
+                                "example": 0
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "Part type",
+                                "example": "barrel"
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Part name",
+                                "example": "Maliwan Barrel"
+                            },
+                            "value": {
+                                "type": "integer",
+                                "description": "Part value",
+                                "example": 50
+                            },
+                            "raw_value": {
+                                "type": "string",
+                                "description": "Original encoded value"
+                            },
+                            "attributes": {
+                                "type": "object",
+                                "description": "Part attributes"
+                            },
+                            "metadata": {
+                                "type": "object",
+                                "description": "Part metadata"
+                            }
+                        }
+                    },
+                    "DecodeResponse": {
+                        "type": "object",
+                        "properties": {
+                            "success": {
+                                "type": "boolean"
+                            },
+                            "serial_code": {
+                                "type": "string"
+                            },
+                            "item_data": {
+                                "$ref": "#/components/schemas/ItemData"
+                            },
+                            "request_id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "processing_time_ms": {
+                                "type": "integer"
+                            },
+                            "metadata": {
+                                "$ref": "#/components/schemas/ResponseMetadata"
+                            }
+                        }
+                    },
+                    "EncodeResponse": {
+                        "type": "object",
+                        "properties": {
+                            "success": {
+                                "type": "boolean"
+                            },
+                            "serial_code": {
+                                "type": "string"
+                            },
+                            "item_data": {
+                                "$ref": "#/components/schemas/ItemData"
+                            },
+                            "request_id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "processing_time_ms": {
+                                "type": "integer"
+                            },
+                            "metadata": {
+                                "$ref": "#/components/schemas/ResponseMetadata"
+                            }
+                        }
+                    },
+                    "ValidateResponse": {
+                        "type": "object",
+                        "properties": {
+                            "success": {
+                                "type": "boolean"
+                            },
+                            "valid": {
+                                "type": "boolean"
+                            },
+                            "serial_code": {
+                                "type": "string"
+                            },
+                            "request_id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "error": {
+                                "type": "string"
+                            },
+                            "error_type": {
+                                "type": "string"
+                            },
+                            "length": {
+                                "type": "integer"
+                            },
+                            "base85_length": {
+                                "type": "integer"
+                            },
+                            "validation_type": {
+                                "type": "string"
+                            },
+                            "issues": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "details": {
+                                "type": "object"
+                            },
+                            "processing_time_ms": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "BatchDecodeResponse": {
+                        "type": "object",
+                        "properties": {
+                            "success": {
+                                "type": "boolean"
+                            },
+                            "request_id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "total_codes": {
+                                "type": "integer"
+                            },
+                            "successful_codes": {
+                                "type": "integer"
+                            },
+                            "failed_codes": {
+                                "type": "integer"
+                            },
+                            "results": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/DecodeResponse"
+                                }
+                            },
+                            "errors": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "processing_time_ms": {
+                                "type": "integer"
+                            },
+                            "metadata": {
+                                "$ref": "#/components/schemas/ResponseMetadata"
+                            }
+                        }
+                    },
+                    "BatchValidateResponse": {
+                        "type": "object",
+                        "properties": {
+                            "success": {
+                                "type": "boolean"
+                            },
+                            "request_id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "total_codes": {
+                                "type": "integer"
+                            },
+                            "valid_codes": {
+                                "type": "integer"
+                            },
+                            "invalid_codes": {
+                                "type": "integer"
+                            },
+                            "results": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/ValidateResponse"
+                                }
+                            },
+                            "processing_time_ms": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "EnhancedBatchDecodeResponse": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/BatchDecodeResponse"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "batch_id": {
+                                        "type": "string",
+                                        "description": "Unique batch identifier for progress tracking"
+                                    },
+                                    "progress": {
+                                        "$ref": "#/components/schemas/BatchProgress"
+                                    },
+                                    "cancellation_token": {
+                                        "type": "string",
+                                        "description": "Token for cancelling the batch operation"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "BatchProgress": {
+                        "type": "object",
+                        "properties": {
+                            "current": {
+                                "type": "integer",
+                                "description": "Current item being processed"
+                            },
+                            "total": {
+                                "type": "integer",
+                                "description": "Total number of items"
+                            },
+                            "percentage": {
+                                "type": "number",
+                                "description": "Progress percentage (0-100)"
+                            },
+                            "processing_rate": {
+                                "type": "number",
+                                "description": "Items processed per second"
+                            },
+                            "estimated_remaining_ms": {
+                                "type": "integer",
+                                "description": "Estimated remaining time in milliseconds"
+                            }
+                        }
+                    },
+                    "ResponseMetadata": {
+                        "type": "object",
+                        "properties": {
+                            "request_id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "timestamp": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "processing_time_ms": {
+                                "type": "integer"
+                            },
+                            "properties": {
+                                "type": "object",
+                                "description": "Additional metadata properties"
+                            }
+                        }
+                    },
+                    "APIDocumentation": {
+                        "type": "object",
+                        "properties": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "version": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "base_url": {
+                                "type": "string"
+                            },
+                            "endpoints": {
+                                "type": "object"
+                            },
+                            "status": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "securitySchemes": {
+                    "ApiKeyAuth": {
+                        "type": "apiKey",
+                        "in": "header",
+                        "name": "X-API-Key"
+                    }
+                }
+            },
+            "tags": [
+                {
+                    "name": "Health",
+                    "description": "Health check and monitoring endpoints"
+                },
+                {
+                    "name": "Items",
+                    "description": "Item encoding, decoding, and validation"
+                },
+                {
+                    "name": "Batch",
+                    "description": "Batch processing operations"
+                },
+                {
+                    "name": "Enhanced",
+                    "description": "Enhanced features with progress tracking"
+                },
+                {
+                    "name": "Documentation",
+                    "description": "API documentation and information"
+                }
+            ]
+        };
+
+        // Initialize Swagger UI
+        const ui = SwaggerUIBundle({
+            url: '',
+            spec: spec,
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset
+            ],
+            plugins: [
+                SwaggerUIBundle.plugins.DownloadUrl
+            ],
+            layout: "StandaloneLayout",
+            defaultModelsExpandDepth: 1,
+            defaultModelExpandDepth: 1,
+            tryItOutEnabled: true,
+            requestInterceptor: function(request) {
+                // Add any global request interceptors here
+                return request;
+            },
+            responseInterceptor: function(response) {
+                // Add any global response interceptors here
+                return response;
+            }
+        });
+
+        // Custom styling for status badges
+        window.onload = function() {
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .swagger-ui .info .title {
+                    color: #667eea;
+                }
+                .opblock.opblock-post {
+                    border-color: #667eea;
+                }
+                .opblock.opblock-post .opblock-summary-method {
+                    background: #667eea;
+                }
+                .opblock.opblock-get {
+                    border-color: #28a745;
+                }
+                .opblock.opblock-get .opblock-summary-method {
+                    background: #28a745;
+                }
+                .swagger-ui .scheme-container {
+                    background: #f8f9fa;
+                    margin: 1rem 0;
+                    padding: 1rem;
+                    border-radius: 4px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+            `;
+            document.head.appendChild(style);
+        };
+    </script>
+</body>
+</html>

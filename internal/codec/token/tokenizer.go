@@ -40,6 +40,7 @@ func NewTokenizerFromBytes(data []byte) *Tokenizer {
 }
 
 // NextToken reads and parses the next token from the bitstream
+// Matches reference implementation logic: https://github.com/Nicnl/borderlands4-serials
 func (t *Tokenizer) NextToken() (Token, error) {
 	if t.closed {
 		return Token{}, ErrTokenizerClosed
@@ -48,8 +49,8 @@ func (t *Tokenizer) NextToken() (Token, error) {
 	// Record starting position
 	startPos := t.reader.Position()
 
-	// Read token header to determine token type
-	header, err := t.reader.ReadBits(3) // 3 bits for token type
+	// Read first two bits (following reference implementation)
+	b1, err := t.reader.ReadBits(1)
 	if err != nil {
 		if err == bitstream.ErrEOF {
 			return Token{
@@ -63,84 +64,151 @@ func (t *Tokenizer) NextToken() (Token, error) {
 		return Token{}, err
 	}
 
-	// Determine token type from header
-	var token Token
-	switch TokenType(header) {
-	case TokenVARINT:
-		token, err = t.parseVARINT(startPos)
-	case TokenVARBIT:
-		token, err = t.parseVARBIT(startPos)
-	case TokenPART:
-		token, err = t.parsePART(startPos)
-	case TokenSTRING:
-		token, err = t.parseSTRING(startPos)
-	case TokenMARKER:
-		token, err = t.parseMARKER(startPos)
-	default:
-		return Token{}, ErrInvalidTokenHeader
-	}
-
+	b2, err := t.reader.ReadBits(1)
 	if err != nil {
+		if err == bitstream.ErrEOF {
+			return Token{
+				Type:     TokenEOF,
+				Value:    nil,
+				RawData:  nil,
+				BitSize:  1, // Only read 1 bit before EOF
+				Position: startPos,
+			}, nil
+		}
 		return Token{}, err
 	}
 
-	return token, nil
+	// Form 2-bit token
+	tok := (b1 << 1) | b2
+
+	// Check for 2-bit separator tokens (following reference implementation)
+	switch tok {
+	case 0b00: // TOK_SEP1 - hard separator
+		return Token{
+			Type:     TokenSEP1,
+			Value:    nil,
+			RawData:  nil,
+			BitSize:  2,
+			Position: startPos,
+		}, nil
+	case 0b01: // TOK_SEP2 - soft separator
+		return Token{
+			Type:     TokenSEP2,
+			Value:    nil,
+			RawData:  nil,
+			BitSize:  2,
+			Position: startPos,
+		}, nil
+	}
+
+	// If we're here, first bit was 1, so we need to read 3rd bit for 3-bit tokens
+	b3, err := t.reader.ReadBits(1)
+	if err != nil {
+		if err == bitstream.ErrEOF {
+			return Token{}, fmt.Errorf("unexpected EOF reading third bit")
+		}
+		return Token{}, err
+	}
+
+	// Form 3-bit token
+	tok = (tok << 1) | b3
+
+	// Determine token type from 3-bit header (following reference implementation)
+	switch tok {
+	case 0b100: // TOK_VARINT
+		return t.parseVARINT(startPos)
+	case 0b101: // TOK_PART
+		return t.parsePART(startPos)
+	case 0b110: // TOK_VARBIT
+		return t.parseVARBIT(startPos)
+	case 0b111: // TOK_STRING
+		return t.parseSTRING(startPos)
+	default:
+		return Token{}, ErrInvalidTokenHeader
+	}
 }
 
 // parseVARINT parses a VARINT token from the bitstream
+// Matches reference implementation: uses 4-bit nibble blocks with continuation bits
 func (t *Tokenizer) parseVARINT(startPos int64) (Token, error) {
-	// Read bit count (6 bits, supports up to 63 bits)
-	bitCount, err := t.reader.ReadBits(6)
-	if err != nil {
-		return Token{}, fmt.Errorf("failed to read VARINT bit count: %w", err)
-	}
+	const (
+		VARINT_NB_BLOCKS       = 4  // Maximum number of blocks
+		VARINT_BITS_PER_BLOCK  = 4  // 4 bits per block (nibble)
+		VARINT_MAX_USABLE_BITS = VARINT_NB_BLOCKS * VARINT_BITS_PER_BLOCK
+	)
 
-	if bitCount == 0 || bitCount > 64 {
-		return Token{}, ErrInvalidVarInt
-	}
+	var (
+		dataRead = 0
+		output   uint64
+	)
 
-	// Read the actual value
-	value, err := t.reader.ReadBits(int(bitCount))
-	if err != nil {
-		return Token{}, fmt.Errorf("failed to read VARINT value: %w", err)
+	// Read up to 4 blocks
+	for range VARINT_NB_BLOCKS {
+		// Read 4-bit block
+		block, err := t.reader.ReadBits(VARINT_BITS_PER_BLOCK)
+		if err != nil {
+			return Token{}, fmt.Errorf("unexpected end of data while reading varint block: %w", err)
+		}
+
+		// Apply 4-bit mirroring (as in reference implementation)
+		// For now, we'll skip the mirroring as our bytes are already mirrored
+		output |= uint64(block) << dataRead
+		dataRead += VARINT_BITS_PER_BLOCK
+
+		// Read continuation bit
+		cont, err := t.reader.ReadBits(1)
+		if err != nil {
+			return Token{}, fmt.Errorf("unexpected end of data while reading varint continuation: %w", err)
+		}
+
+		// If continuation bit is 0, this is the last block
+		if cont == 0 {
+			break
+		}
 	}
 
 	return Token{
 		Type:     TokenVARINT,
-		Value:    value,
-		RawData:  nil, // Could be populated for debugging
-		BitSize:  3 + 6 + int(bitCount), // header(3) + size(6) + data
+		Value:    output,
+		RawData:  nil,
+		BitSize:  3 + dataRead + (dataRead/VARINT_BITS_PER_BLOCK), // header(3) + data + continuation bits
 		Position: startPos,
 	}, nil
 }
 
 // parseVARBIT parses a VARBIT token from the bitstream
+// Matches reference implementation: 5-bit length + bits
 func (t *Tokenizer) parseVARBIT(startPos int64) (Token, error) {
-	// Read bit count (6 bits, supports up to 63 bits)
-	bitCount, err := t.reader.ReadBits(6)
+	const VARBIT_LENGTH_BLOCK_SIZE = 5
+
+	// Read 5-bit length
+	length, err := t.reader.ReadBits(VARBIT_LENGTH_BLOCK_SIZE)
 	if err != nil {
-		return Token{}, fmt.Errorf("failed to read VARBIT bit count: %w", err)
+		return Token{}, fmt.Errorf("unexpected end of data while reading varbit length: %w", err)
 	}
 
-	if bitCount == 0 || bitCount > 32 {
-		return Token{}, ErrInvalidVarBit
+	// Apply 5-bit mirroring (reference implementation does this)
+	// For now, we'll skip mirroring as our bytes are already mirrored
+	if length > 32 {
+		return Token{}, fmt.Errorf("varbit length %d exceeds maximum 32", length)
 	}
 
-	// Read the actual bits
-	bits := make([]bool, bitCount)
-	for i := 0; i < int(bitCount); i++ {
-		bit, err := t.reader.ReadBit()
+	// Read the specified number of bits as a bit array
+	bits := make([]bool, length)
+	for i := uint64(0); i < length; i++ {
+		bit, err := t.reader.ReadBits(1)
 		if err != nil {
-			return Token{}, fmt.Errorf("failed to read VARBIT at bit %d: %w", i, err)
+			return Token{}, fmt.Errorf("unexpected end of data while reading varbit value: %w", err)
 		}
-		bits[i] = bit
+
+		bits[i] = (bit == 1)
 	}
 
 	return Token{
 		Type:     TokenVARBIT,
 		Value:    bits,
 		RawData:  nil,
-		BitSize:  3 + 6 + int(bitCount), // header(3) + size(6) + data
+		BitSize:  3 + VARBIT_LENGTH_BLOCK_SIZE + int(length), // header(3) + length(5) + data
 		Position: startPos,
 	}, nil
 }
@@ -191,6 +259,16 @@ func (t *Tokenizer) parseSTRING(startPos int64) (Token, error) {
 	for i := 0; i < int(length); i++ {
 		charByte, err := t.reader.ReadByte()
 		if err != nil {
+			// Handle EOF gracefully - return partial string
+			if err == bitstream.ErrEOF {
+				return Token{
+					Type:     TokenSTRING,
+					Value:    chars.String(),
+					RawData:  nil,
+					BitSize:  3 + 8 + (i*8), // header + length + actual chars
+					Position: startPos,
+				}, nil
+			}
 			return Token{}, fmt.Errorf("failed to read STRING character at position %d: %w", i, err)
 		}
 		chars.WriteByte(charByte)
@@ -199,6 +277,17 @@ func (t *Tokenizer) parseSTRING(startPos int64) (Token, error) {
 	// Read null terminator (should be 0)
 	terminator, err := t.reader.ReadBits(8)
 	if err != nil {
+		// Handle EOF for terminator - this can happen with incomplete strings
+		if err == bitstream.ErrEOF {
+			// Return the string without terminator validation
+			return Token{
+				Type:     TokenSTRING,
+				Value:    chars.String(),
+				RawData:  nil,
+				BitSize:  3 + 8 + (int(length)*8), // header + length + all chars
+				Position: startPos,
+			}, nil
+		}
 		return Token{}, fmt.Errorf("failed to read STRING terminator: %w", err)
 	}
 

@@ -29,9 +29,9 @@ type Charset struct {
 func NewCharset() *Charset {
 	cs := &Charset{}
 
-	// Z85 character set - 85 printable ASCII characters
-	// These characters are chosen to be safe for various transport protocols
-	z85Chars := []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#")
+	// BL4 Base85 character set - matches Borderlands 4 game implementation
+	// Official character set from reference implementation
+	z85Chars := []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{/}~")
 
 	// Initialize encoder
 	copy(cs.Encoder[:], z85Chars)
@@ -154,6 +154,11 @@ func (cs *Charset) EncodeQuad(input [4]byte) [5]byte {
 		cs.Encoder[digit3],
 		cs.Encoder[digit4],
 	}
+}
+
+// DecodeByte decodes a single Base85 character to its value
+func (cs *Charset) DecodeByte(ch byte) byte {
+	return cs.Decoder[ch]
 }
 
 // DecodeQuad decodes 5 Base85 characters to 4 bytes

@@ -35,9 +35,15 @@ func main() {
 		return
 	}
 
+	// Initialize logger with defaults first
+	if err := logger.Init("info", "console", "stdout"); err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	defer logger.Close()
+
 	// Initialize configuration
 	if err := config.InitializeGlobalConfig(); err != nil {
-		log.Fatalf("Failed to initialize configuration: %v", err)
+		logger.Sugar().Fatal("Failed to initialize configuration", "error", err)
 	}
 
 	cfg := config.GetGlobalConfig()

@@ -79,6 +79,72 @@ type EncodedItemData struct {
 	Properties map[string]interface{} `json:"properties,omitempty"`
 }
 
+// AddEncodingInfo adds encoding information to the response
+func (d *EncodedItemData) AddEncodingInfo(statistics interface{}, validation interface{}, optimization interface{}) {
+	if d.Encoding == nil {
+		d.Encoding = &EncodingInfo{
+			Properties: make(map[string]interface{}),
+		}
+	}
+
+	d.Encoding.Format = "bl4-base85"
+	d.Encoding.Algorithm = "base85_v1"
+	d.Encoding.Version = "1.0"
+
+	// Add original and encoded sizes
+	if d.ItemData != nil {
+		d.Encoding.OriginalSize = calculateItemDataSize(d.ItemData)
+	}
+	d.Encoding.EncodedSize = len(d.SerialCode)
+
+	if d.Encoding.OriginalSize > 0 {
+		d.Encoding.Compression = float64(d.Encoding.EncodedSize) / float64(d.Encoding.OriginalSize)
+	}
+
+	// Add additional properties
+	if statistics != nil {
+		d.Encoding.Properties["statistics"] = statistics
+	}
+	if validation != nil {
+		d.Encoding.Properties["validation"] = validation
+	}
+	if optimization != nil {
+		d.Encoding.Properties["optimization"] = optimization
+	}
+}
+
+// calculateItemDataSize estimates the size of item data
+func calculateItemDataSize(itemData *ItemData) int {
+	if itemData == nil {
+		return 0
+	}
+
+	size := 0
+
+	// Basic fields (estimated)
+	size += 8 // level (8 bits)
+	size += 8 // type (8 bits)
+	size += 8 // manufacturer (8 bits)
+
+	// Parts (each part ~32 bits)
+	if itemData.Parts != nil {
+		size += len(itemData.Parts) * 32
+	}
+
+	// Strings (estimated)
+	if itemData.Name != "" {
+		size += len(itemData.Name) * 8 + 16 // 8 bits per char + overhead
+	}
+	if itemData.Description != "" {
+		size += len(itemData.Description) * 8 + 16
+	}
+	if itemData.Rarity != "" {
+		size += len(itemData.Rarity) * 8 + 16
+	}
+
+	return size / 8 // Convert to bytes
+}
+
 // EncodingInfo contains information about the encoding process
 type EncodingInfo struct {
 	Format       string                 `json:"format"`        // Encoding format
@@ -196,6 +262,14 @@ type PerformanceMetrics struct {
 	Throughput float64 `json:"throughput"`   // Items processed per second
 	Latency    int64   `json:"latency"`      // Response latency in microseconds
 	Operations  int     `json:"operations"`   // Number of operations performed
+}
+
+// ValidationResponse represents the response from a validation operation
+type ValidationResponse struct {
+	IsValid  bool                   `json:"is_valid"`
+	Message  string                 `json:"message"`
+	Details  map[string]interface{} `json:"details,omitempty"`
+	Duration int64                  `json:"duration"` // Validation time in microseconds
 }
 
 // Helper methods
@@ -503,4 +577,38 @@ func (m *ResponseMetadata) GetProcessingTime() time.Duration {
 		return time.Duration(m.Performance.CPUTime) * time.Microsecond
 	}
 	return 0
+}
+
+// ComprehensiveValidateResponse represents the response from a validation operation
+type ComprehensiveValidateResponse struct {
+	Success           bool                   `json:"success"`
+	Valid             bool                   `json:"valid"`
+	SerialCode        string                 `json:"serial_code"`
+	RequestID         string                 `json:"request_id,omitempty"`
+	Error             string                 `json:"error,omitempty"`
+	ErrorType         string                 `json:"error_type,omitempty"`
+	StatusCode        int                    `json:"status_code,omitempty"`
+	Length            int                    `json:"length,omitempty"`
+	Base85Length      int                    `json:"base85_length,omitempty"`
+	ValidationType    string                 `json:"validation_type,omitempty"`
+	Issues            []string               `json:"issues,omitempty"`
+	Details           map[string]interface{} `json:"details,omitempty"`
+	ProcessingTimeMs  int64                  `json:"processing_time_ms,omitempty"`
+}
+
+// BatchValidateRequest represents a batch validation request
+type BatchValidateRequest struct {
+	SerialCodes []string        `json:"serial_codes" binding:"required"`
+	Options     *ValidateOptions `json:"options,omitempty"`
+}
+
+// BatchValidateResponse represents the response from a batch validation operation
+type BatchValidateResponse struct {
+	Success          bool                             `json:"success"`
+	RequestID        string                           `json:"request_id,omitempty"`
+	TotalCodes       int                              `json:"total_codes"`
+	ValidCodes       int                              `json:"valid_codes"`
+	InvalidCodes     int                              `json:"invalid_codes"`
+	Results          []ComprehensiveValidateResponse  `json:"results"`
+	ProcessingTimeMs int64                            `json:"processing_time_ms,omitempty"`
 }

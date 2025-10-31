@@ -116,31 +116,6 @@ type BatchEncodeOptions struct {
 	PerItemTimeout int `json:"per_item_timeout,omitempty"` // Timeout per item in milliseconds
 }
 
-// ValidateRequest represents a request to validate an item serial code
-type ValidateRequest struct {
-	SerialCode string                 `json:"serial_code" binding:"required"`
-	Options    *ValidateOptions       `json:"options,omitempty"`
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`
-}
-
-// ValidateOptions contains options for validation
-type ValidateOptions struct {
-	// CheckFormat validates the Base85 format
-	CheckFormat bool `json:"check_format,omitempty"`
-
-	// CheckStructure validates the internal structure
-	CheckStructure bool `json:"check_structure,omitempty"`
-
-	// CheckParts validates individual parts
-	CheckParts bool `json:"check_parts,omitempty"`
-
-	// StrictMode enables strict validation
-	StrictMode bool `json:"strict_mode,omitempty"`
-
-	// ReturnDetails includes detailed validation information
-	ReturnDetails bool `json:"return_details,omitempty"`
-}
-
 // ItemData represents structured item information
 type ItemData struct {
 	// Basic item information
@@ -471,4 +446,87 @@ func (r *DecodeRequest) IsEmpty() bool {
 func (r *DecodeRequest) String() string {
 	return fmt.Sprintf("DecodeRequest{SerialCode: %s, Format: %s, IncludeBitstream: %v, IncludeTokens: %v}",
 		r.SerialCode, r.GetFormat(), r.HasOption("include_bitstream"), r.HasOption("include_tokens"))
+}
+
+// Helper methods for EncodeRequest
+
+// HasOption checks if a specific encode option is enabled
+func (r *EncodeRequest) HasOption(option string) bool {
+	if r.Options == nil {
+		return false
+	}
+
+	switch option {
+	case "optimize_size":
+		return r.Options.OptimizeSize
+	case "validate_parts":
+		return r.Options.ValidateParts
+	case "include_prefix":
+		return r.Options.IncludePrefix
+	case "include_metadata":
+		// Include metadata is handled at the handler level, not part of EncodeOptions
+		return false
+	default:
+		return false
+	}
+}
+
+// GetTimeout returns the timeout option, defaulting to 5000ms
+func (r *EncodeRequest) GetTimeout() int {
+	// Encode requests don't have timeout in options currently
+	// This could be added to EncodeOptions if needed
+	return 5000 // 5 seconds default
+}
+
+// GetTargetVersion returns the target version option, defaulting to "1.0"
+func (r *EncodeRequest) GetTargetVersion() string {
+	if r.Options != nil && r.Options.TargetVersion != "" {
+		return r.Options.TargetVersion
+	}
+	return "1.0"
+}
+
+// GetFormat returns the format option, defaulting to "structured"
+func (r *EncodeRequest) GetFormat() string {
+	if r.Options != nil && r.Options.Format != "" {
+		return r.Options.Format
+	}
+	return "structured"
+}
+
+// IsEmpty returns true if the request has no meaningful data
+func (r *EncodeRequest) IsEmpty() bool {
+	return r.ItemData == nil
+}
+
+// String returns a string representation of the request
+func (r *EncodeRequest) String() string {
+	if r.ItemData == nil {
+		return "EncodeRequest{empty}"
+	}
+
+	return fmt.Sprintf("EncodeRequest{Level: %d, Type: %s, Manufacturer: %s, Parts: %d, Format: %s}",
+		r.ItemData.Level, r.ItemData.Type, r.ItemData.Manufacturer, len(r.ItemData.Parts), r.GetFormat())
+}
+
+// ValidateOptions contains options for validation
+type ValidateOptions struct {
+	// StrictMode enables strict validation rules
+	StrictMode bool `json:"strict_mode,omitempty"`
+
+	// IncludeDetails includes detailed validation information
+	IncludeDetails bool `json:"include_details,omitempty"`
+
+	// ValidateStructure attempts to decode the code for structural validation
+	ValidateStructure bool `json:"validate_structure,omitempty"`
+
+	// Timeout specifies maximum validation time in milliseconds
+	Timeout int `json:"timeout,omitempty"`
+}
+
+// ValidateRequest represents a request to validate a serial code
+type ValidateRequest struct {
+	SerialCode string                 `json:"serial_code" binding:"required" example:"@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"`
+	Options    *ValidateOptions       `json:"options,omitempty"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
 }

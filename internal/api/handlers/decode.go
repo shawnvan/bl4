@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/shawnvan/bl4/internal/api/models"
+	"github.com/shawnvan/bl4/internal/api/services"
+	"github.com/shawnvan/bl4/internal/codec/serial"
 	"github.com/shawnvan/bl4/pkg/logger"
 	"github.com/shawnvan/bl4/pkg/validator"
 )
@@ -35,35 +38,85 @@ func (h *DecodeHandler) HandleDecode(c *gin.Context) {
 		"options", request.Options,
 	)
 
-	// For now, return a simple mock response
+	// Create deserializer with options from request
+	deserializerOptions := &serial.DeserializerOptions{
+		IncludeBitstream: request.HasOption("include_bitstream"),
+		IncludeTokens:    request.HasOption("include_tokens"),
+		IncludeRawData:   request.HasOption("include_raw_data"),
+		StrictValidation: true,
+		MaxProcessingTime: request.GetTimeout(),
+	}
+
+	deserializer := serial.NewDeserializerWithOptions(deserializerOptions)
+
+	// Perform deserialization
+	deserializationResult, err := deserializer.DeserializeItem(request.SerialCode)
+	if err != nil {
+		logger.Sugar().Errorw("Deserialization failed",
+			"serial_code", request.SerialCode,
+			"error", err.Error(),
+			"duration_ms", time.Since(startTime).Milliseconds(),
+		)
+
+		// Return error response
+		response := &models.DecodeResponse{
+			Success: false,
+			Error:   models.NewErrorInfo(err),
+			Metadata: models.NewResponseMetadata(),
+		}
+		response.Metadata.UpdatePerformance(int64(time.Since(startTime).Microseconds()), 0)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// Build success response
 	response := &models.DecodeResponse{
 		Success: true,
 		Data: &models.DecodedItemData{
 			SerialCode: request.SerialCode,
-			ItemData: &models.ItemData{
-				Level:        1,
-				Type:         "unknown",
-				Manufacturer: "unknown",
-				Parts:        make([]models.PartData, 0),
-				RawParts:     "mock_data",
-			},
+			ItemData:   deserializationResult.ItemData,
 		},
-		Metadata: &models.ResponseMetadata{
-			Timestamp:   time.Now().UTC(),
-			RequestID:   "req_" + fmt.Sprintf("%d", time.Now().UnixNano()),
-			Version:     "1.0.0",
-			Performance: &models.PerformanceMetrics{
-				CPUTime:    int64(time.Since(startTime).Microseconds()),
-				MemoryUsed: 0,
-				Latency:    int64(time.Since(startTime).Microseconds()),
-				Operations: 1,
-			},
-		},
+		Metadata: models.NewResponseMetadata(),
 	}
+
+	// Add bitstream info if requested
+	if deserializerOptions.IncludeBitstream && deserializationResult.BitstreamInfo != nil {
+		response.Data.AddBitstreamInfo(
+			deserializationResult.TokenStream,
+			deserializationResult.DecodedBytes,
+			true, // Include raw bitstream data
+		)
+	}
+
+	// Add token info if requested
+	if deserializerOptions.IncludeTokens && deserializationResult.TokenInfos != nil {
+		response.Data.AddTokens(deserializationResult.TokenStream)
+	}
+
+	// Add raw data info if requested
+	if deserializerOptions.IncludeRawData && deserializationResult.RawDataInfo != nil {
+		response.Data.AddRawData(
+			deserializationResult.RawDataInfo.Structured,
+			"", // JSON representation could be added later
+			"", // CSV representation could be added later
+			"", // Hex representation could be added later
+		)
+	}
+
+	// Update performance metrics
+	response.Metadata.UpdatePerformance(
+		int64(time.Since(startTime).Microseconds()),
+		0, // Memory usage could be tracked later
+	)
 
 	logger.Sugar().Infow("Decode request completed successfully",
 		"serial_code", request.SerialCode,
 		"duration_ms", time.Since(startTime).Milliseconds(),
+		"level", deserializationResult.ItemData.Level,
+		"type", deserializationResult.ItemData.Type,
+		"manufacturer", deserializationResult.ItemData.Manufacturer,
+		"parts_count", len(deserializationResult.ItemData.Parts),
 	)
 
 	c.JSON(http.StatusOK, response)
@@ -140,64 +193,253 @@ func (h *BatchDecodeHandler) HandleBatchDecode(c *gin.Context) {
 
 	logger.Sugar().Infow("Batch decode request received",
 		"serial_codes_count", len(request.SerialCodes),
-		"options", request.Options,
+	"options", request.Options,
 	)
 
-	// For now, return simple mock results
-	results := make([]*models.BatchDecodeResult, len(request.SerialCodes))
-	for i, serialCode := range request.SerialCodes {
-		results[i] = &models.BatchDecodeResult{
-			Index:      i,
-			SerialCode: serialCode,
-			Success:    true,
-			Data: &models.DecodedItemData{
-				SerialCode: serialCode,
-				ItemData: &models.ItemData{
-					Level:        1,
-					Type:         "unknown",
-					Manufacturer: "unknown",
-					Parts:        make([]models.PartData, 0),
-					RawParts:     "mock_data",
-				},
-			},
-			Duration: int64(time.Since(startTime).Microseconds()),
-		}
+	// Validate request
+	if err := request.Validate(); err != nil {
+		h.handleError(c, err)
+		return
 	}
 
-	response := &models.BatchDecodeResponse{
-		Success: true,
-		Results: results,
-		Statistics: &models.BatchStatistics{
-			Total:          len(request.SerialCodes),
-			Successful:     len(request.SerialCodes),
-			Failed:         0,
-			SuccessRate:    1.0,
-			AverageTime:    int64(time.Since(startTime).Microseconds()) / int64(len(request.SerialCodes)),
-			MinTime:        int64(time.Since(startTime).Microseconds()) / int64(len(request.SerialCodes)),
-			MaxTime:        int64(time.Since(startTime).Microseconds()) / int64(len(request.SerialCodes)),
-			StartTime:      startTime.UTC(),
-			EndTime:        time.Now().UTC(),
-		},
-		Metadata: &models.ResponseMetadata{
-			Timestamp:   time.Now().UTC(),
-			RequestID:   "batch_" + fmt.Sprintf("%d", time.Now().UnixNano()),
-			Version:     "1.0.0",
-			Performance: &models.PerformanceMetrics{
-				CPUTime:    int64(time.Since(startTime).Microseconds()),
-				MemoryUsed: 0,
-				Latency:    int64(time.Since(startTime).Microseconds()),
-				Operations: len(request.SerialCodes),
-			},
-		},
+	// Create batch handler with custom config if needed
+	batchHandler := services.NewBatchDecodeHandler()
+
+	// Process the batch
+	batchResponse, err := batchHandler.HandleBatchDecode(&request)
+	if err != nil {
+		h.handleError(c, err)
+		return
 	}
 
 	logger.Sugar().Infow("Batch decode request completed successfully",
 		"serial_codes_count", len(request.SerialCodes),
 		"duration_ms", time.Since(startTime).Milliseconds(),
-		"successful_count", response.Statistics.Successful,
+		"successful_count", batchResponse.Statistics.Successful,
+		"failed_count", batchResponse.Statistics.Failed,
 	)
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, batchResponse)
+}
+
+// HandleBatchDecodeEnhanced handles POST /api/v1/items/batch/decode with enhanced progress tracking
+func (h *BatchDecodeHandler) HandleBatchDecodeEnhanced(c *gin.Context) {
+	startTime := time.Now()
+
+	// Generate batch ID
+	batchID := uuid.New().String()
+
+	// Get request ID from middleware (if available)
+	requestID, exists := c.Get("request_id")
+	if !exists {
+		requestID = batchID
+	}
+
+	// Parse request
+	var request models.BatchDecodeRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		h.handleError(c, validator.NewValidationError(validator.ErrCodeInvalidInput, "Invalid batch request format"))
+		return
+	}
+
+	logger.Sugar().Infow("Enhanced batch decode request received",
+		"batch_id", batchID,
+		"request_id", requestID,
+		"serial_codes_count", len(request.SerialCodes),
+		"options", request.Options,
+	)
+
+	// Validate request
+	if err := request.Validate(); err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	// Create batch processor with custom config if needed
+	batchHandler := services.NewBatchDecodeHandler()
+
+	// Create progress subscriber that sends updates via WebSocket or Server-Sent Events
+	progressSubscriber := &HTTPProgressSubscriber{
+		Context:  c,
+		BatchID:  batchID,
+		StartTime: startTime,
+	}
+
+	// Check if client wants enhanced tracking (based on query parameter or header)
+	wantEnhancedTracking := c.Query("progress") == "true" || c.GetHeader("X-Progress-Tracking") == "true"
+
+	var result *models.BatchDecodeResponse
+	var err error
+
+	if wantEnhancedTracking {
+		// Use enhanced batch processing with progress tracking
+		batchProcessor := services.NewBatchProcessor()
+		processResult, processErr := batchProcessor.ProcessBatchWithTracking(batchID, &request, progressSubscriber)
+		if processErr != nil {
+			h.handleError(c, processErr)
+			return
+		}
+
+		// Convert to response format
+		result = &models.BatchDecodeResponse{
+			Success: true,
+			Results: processResult.Results,
+			Statistics: &models.BatchStatistics{
+				Total:       processResult.Statistics.Total,
+				Successful:  processResult.Statistics.Successful,
+				Failed:      processResult.Statistics.Failed,
+				SuccessRate: processResult.Statistics.SuccessRate,
+				AverageTime: processResult.Statistics.AverageTime,
+				MinTime:     processResult.Statistics.MinTime,
+				MaxTime:     processResult.Statistics.MaxTime,
+				StartTime:   processResult.Statistics.StartTime,
+				EndTime:     processResult.Statistics.EndTime,
+			},
+			Metadata: models.NewResponseMetadata(),
+		}
+	} else {
+		// Use standard batch processing
+		result, err = batchHandler.HandleBatchDecode(&request)
+		if err != nil {
+			h.handleError(c, err)
+			return
+		}
+	}
+
+	// Update performance metrics
+	result.Metadata.UpdatePerformance(int64(time.Since(startTime).Microseconds()), 0)
+
+	// Add batch ID to response for tracking
+	if result.Metadata == nil {
+		result.Metadata = models.NewResponseMetadata()
+	}
+	if result.Metadata.Properties == nil {
+		result.Metadata.Properties = make(map[string]interface{})
+	}
+	result.Metadata.Properties["batch_id"] = batchID
+	result.Metadata.Properties["request_id"] = requestID
+
+	logger.Sugar().Infow("Enhanced batch decode request completed successfully",
+		"batch_id", batchID,
+		"request_id", requestID,
+		"serial_codes_count", len(request.SerialCodes),
+		"successful_count", result.Statistics.Successful,
+		"failed_count", result.Statistics.Failed,
+		"duration_ms", time.Since(startTime).Milliseconds(),
+	)
+
+	// Set response headers for batch tracking
+	c.Header("X-Batch-ID", batchID)
+	c.Header("X-Request-ID", fmt.Sprintf("%v", requestID))
+
+	c.JSON(http.StatusOK, result)
+}
+
+// HandleBatchCancel handles DELETE /api/v1/items/batch/:id/cancel requests
+func (h *BatchDecodeHandler) HandleBatchCancel(c *gin.Context) {
+	batchID := c.Param("id")
+	if batchID == "" {
+		h.handleError(c, validator.NewValidationError(validator.ErrCodeInvalidInput, "Batch ID is required"))
+		return
+	}
+
+	// Get cancellation reason from request body or query parameter
+	reason := c.Query("reason")
+	if reason == "" {
+		reason = "User requested cancellation"
+	}
+
+	// Create batch processor and cancel the batch
+	batchProcessor := services.NewBatchProcessor()
+	err := batchProcessor.CancelBatch(batchID, reason)
+
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	logger.Sugar().Infow("Batch operation cancelled via API",
+		"batch_id", batchID,
+		"reason", reason,
+		"client_ip", c.ClientIP(),
+	)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": fmt.Sprintf("Batch %s cancelled successfully", batchID),
+		"batch_id": batchID,
+		"reason": reason,
+		"timestamp": time.Now().UTC(),
+	})
+}
+
+// HandleBatchProgress handles GET /api/v1/items/batch/:id/progress requests
+func (h *BatchDecodeHandler) HandleBatchProgress(c *gin.Context) {
+	batchID := c.Param("id")
+	if batchID == "" {
+		h.handleError(c, validator.NewValidationError(validator.ErrCodeInvalidInput, "Batch ID is required"))
+		return
+	}
+
+	// Get batch progress
+	batchProcessor := services.NewBatchProcessor()
+	progress, err := batchProcessor.GetBatchProgress(batchID)
+
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	logger.Sugar().Debugw("Batch progress requested",
+		"batch_id", batchID,
+		"client_ip", c.ClientIP(),
+	)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"batch_id": batchID,
+		"progress": progress,
+		"timestamp": time.Now().UTC(),
+	})
+}
+
+// HTTPProgressSubscriber implements ProgressSubscriber for HTTP responses
+type HTTPProgressSubscriber struct {
+	Context   *gin.Context
+	BatchID   string
+	StartTime time.Time
+}
+
+// OnProgress handles progress updates for HTTP responses
+func (s *HTTPProgressSubscriber) OnProgress(update *services.ProgressUpdate) {
+	// For HTTP responses, we'll log progress updates
+	// In a real implementation, you might use Server-Sent Events or WebSocket
+	if update.IsComplete {
+		if update.Error != "" {
+			logger.Sugar().Errorw("Batch processing completed with errors",
+				"batch_id", s.BatchID,
+				"error", update.Error,
+				"duration_ms", time.Since(s.StartTime).Milliseconds(),
+			)
+		} else {
+			logger.Sugar().Infow("Batch processing completed successfully",
+				"batch_id", s.BatchID,
+				"total_items", update.Progress.Total,
+				"successful_items", update.Progress.Successful,
+				"failed_items", update.Progress.Failed,
+				"duration_ms", time.Since(s.StartTime).Milliseconds(),
+			)
+		}
+	} else {
+		logger.Sugar().Debugw("Batch processing progress update",
+			"batch_id", s.BatchID,
+			"progress_percent", update.Progress.Progress*100,
+			"processed", update.Progress.Processed,
+			"total", update.Progress.Total,
+			"items_per_sec", update.Progress.ItemsPerSec,
+			"eta_ms", update.Progress.ETA,
+		)
+	}
 }
 
 // handleError handles batch request errors

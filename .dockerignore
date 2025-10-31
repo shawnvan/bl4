@@ -1,0 +1,108 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+docs/
+*.md
+!docs/api-docs.html
+
+# Test files
+tests/
+*_test.go
+*.test
+coverage.out
+coverage.html
+
+# Development files
+Makefile
+scripts/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node modules (if any for web assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Build artifacts (except the final binary)
+bin/!bl4-api
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go specific
+vendor/
+
+# IDE files
+*.iml
+*.ipr
+*.iws
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Docker files (not needed in image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Local configuration
+config/local.*
+config/development.*
+config/test.*
+
+# Data files
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+
+# Backup files
+*.bak
+*.backup
+
+# SSL certificates (not for image)
+*.pem
+*.key
+*.crt
+ssl/

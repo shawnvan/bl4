@@ -77,11 +77,13 @@ func (r *Reader) ReadBits(bitCount int) (uint64, error) {
 			bitsToRead = bitsInByte
 		}
 
-		// Extract bits from current byte
+		// Extract bits from current byte (MSB-first like reference implementation)
 		currentByte := r.buffer[r.pos]
 
-		// Shift right to align the bits we want
-		currentByte >>= r.bitPos
+		// For MSB-first bit reading: shift right to get bits from most significant end
+		// Reference implementation uses: (b >> (7 - (br.pos % 8))) & 1
+		shiftAmount := 7 - r.bitPos
+		currentByte >>= shiftAmount
 
 		// Mask to get only the bits we need
 		mask := uint64(1<<bitsToRead - 1)

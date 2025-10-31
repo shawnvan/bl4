@@ -1,6 +1,6 @@
 # BL4 Item Serial Code Codec Makefile
 
-.PHONY: all build clean test lint fmt run-api run-gui run-cli run-tui docker-build docker-run help
+.PHONY: all build clean test lint fmt run-api run-gui run-cli run-tui docker-build docker-run docker-build-dev docker-run-dev docker-build-prod docker-run-prod docker-stop docker-clean help
 
 # Variables
 BINARY_NAME_API=bl4-api
@@ -121,12 +121,71 @@ dev-deps:
 # Docker build
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t bl4:$(VERSION) .
+	docker build -t bl4-api:$(VERSION) .
 
 # Docker run
 docker-run:
 	@echo "Running Docker container..."
-	docker run --rm -p 8080:8080 bl4:$(VERSION)
+	docker run --rm -p 8080:8080 bl4-api:$(VERSION)
+
+# Docker build and run development
+docker-build-dev:
+	@echo "Building and running development Docker environment..."
+	@./scripts/deploy.sh build
+
+docker-run-dev:
+	@echo "Running development Docker environment..."
+	@./scripts/deploy.sh dev
+
+# Docker build and run production
+docker-build-prod:
+	@echo "Building and running production Docker environment..."
+	@./scripts/deploy.sh build
+
+docker-run-prod:
+	@echo "Running production Docker environment..."
+	@./scripts/deploy.sh prod
+
+# Docker stop services
+docker-stop:
+	@echo "Stopping Docker services..."
+	@./scripts/deploy.sh stop
+
+# Docker cleanup
+docker-clean:
+	@echo "Cleaning up Docker resources..."
+	@./scripts/deploy.sh cleanup
+
+# Docker logs
+docker-logs:
+	@echo "Showing Docker logs..."
+	@./scripts/deploy.sh logs
+
+# Docker logs for specific service
+docker-logs-api:
+	@echo "Showing API logs..."
+	@./scripts/deploy.sh logs bl4-api
+
+# Docker health check
+docker-health:
+	@echo "Checking Docker services health..."
+	@./scripts/deploy.sh health
+
+# Docker compose development
+docker-compose-dev:
+	@echo "Starting development environment with docker-compose..."
+	docker-compose up --build
+
+# Docker compose production
+docker-compose-prod:
+	@echo "Starting production environment with docker-compose..."
+	docker-compose -f docker-compose.prod.yml up --build
+
+# Docker compose down
+docker-compose-down:
+	@echo "Stopping docker-compose services..."
+	docker-compose down
+	docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
 
 # Generate documentation
 docs:
@@ -162,30 +221,48 @@ release: clean test build
 # Help
 help:
 	@echo "Available targets:"
-	@echo "  all           - Build all binaries"
-	@echo "  build-api     - Build API server"
-	@echo "  build-gui     - Build GUI application"
-	@echo "  build-cli     - Build CLI tool"
-	@echo "  build-tui     - Build TUI tool"
-	@echo "  run-api       - Run API server (port 8080)"
-	@echo "  run-gui       - Run GUI application"
-	@echo "  run-cli       - Run CLI tool"
-	@echo "  run-tui       - Run TUI tool"
-	@echo "  test          - Run tests"
-	@echo "  test-coverage - Run tests with coverage report"
-	@echo "  bench         - Run benchmark tests"
-	@echo "  security      - Run security check"
-	@echo "  lint          - Run linter"
-	@echo "  fmt           - Format code"
-	@echo "  tidy          - Tidy dependencies"
-	@echo "  clean         - Clean build artifacts"
-	@echo "  clean-all     - Clean all generated files"
-	@echo "  docker-build  - Build Docker image"
-	@	"  docker-run    - Run Docker container"
-	@echo "  docs          - Generate documentation"
-	@echo "  install       - Install binaries globally"
-	@echo "  dev-setup     - Setup development environment"
-	@echo "  quality       - Run code quality checks"
-	@echo "  dev           - Quick development cycle"
-	@echo "  release       - Release build"
-	@echo "  help          - Show this help message"
+	@echo "  all                    - Build all binaries"
+	@echo "  build-api             - Build API server"
+	@echo "  build-gui             - Build GUI application"
+	@echo "  build-cli             - Build CLI tool"
+	@echo "  build-tui             - Build TUI tool"
+	@echo "  run-api               - Run API server (port 8080)"
+	@echo "  run-gui               - Run GUI application"
+	@echo "  run-cli               - Run CLI tool"
+	@echo "  run-tui               - Run TUI tool"
+	@echo "  test                  - Run tests"
+	@echo "  test-coverage         - Run tests with coverage report"
+	@echo "  bench                 - Run benchmark tests"
+	@echo "  security              - Run security check"
+	@echo "  lint                  - Run linter"
+	@echo "  fmt                   - Format code"
+	@echo "  tidy                  - Tidy dependencies"
+	@echo "  clean                 - Clean build artifacts"
+	@echo "  clean-all             - Clean all generated files"
+	@echo "  docker-build          - Build Docker image"
+	@echo "  docker-run            - Run Docker container"
+	@echo "  docker-build-dev      - Build development Docker environment"
+	@echo "  docker-run-dev        - Run development Docker environment"
+	@echo "  docker-build-prod     - Build production Docker environment"
+	@echo "  docker-run-prod       - Run production Docker environment"
+	@echo "  docker-stop           - Stop Docker services"
+	@echo "  docker-clean          - Clean up Docker resources"
+	@echo "  docker-logs           - Show Docker logs"
+	@echo "  docker-logs-api       - Show API service logs"
+	@echo "  docker-health         - Check Docker services health"
+	@echo "  docker-compose-dev    - Start dev environment with docker-compose"
+	@echo "  docker-compose-prod   - Start prod environment with docker-compose"
+	@echo "  docker-compose-down   - Stop docker-compose services"
+	@echo "  docs                  - Generate documentation"
+	@echo "  install               - Install binaries globally"
+	@echo "  dev-setup             - Setup development environment"
+	@echo "  quality               - Run code quality checks"
+	@echo "  dev                   - Quick development cycle"
+	@echo "  release               - Release build"
+	@echo "  help                  - Show this help message"
+	@echo ""
+	@echo "Docker examples:"
+	@echo "  make docker-run-dev           # Deploy development environment"
+	@echo "  make docker-compose-prod      # Deploy production environment"
+	@echo "  make docker-logs-api          # View API logs"
+	@echo "  make docker-stop              # Stop all services"

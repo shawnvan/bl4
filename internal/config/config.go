@@ -229,13 +229,18 @@ func (m *Manager) Load() error {
 	// Try to read config file
 	if err := m.viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found, use defaults
-			logger.Sugar().Info("Config file not found, using defaults and environment variables")
+			// Config file not found, use defaults - only log if logger is initialized
+			if logger.Logger != nil {
+				logger.Sugar().Info("Config file not found, using defaults and environment variables")
+			}
 		} else {
 			return fmt.Errorf("error reading config file: %w", err)
 		}
 	} else {
-		logger.Sugar().Infow("Config file loaded", "file", m.viper.ConfigFileUsed())
+		// Only log if logger is initialized
+		if logger.Logger != nil {
+			logger.Sugar().Infow("Config file loaded", "file", m.viper.ConfigFileUsed())
+		}
 	}
 
 	// Unmarshal configuration

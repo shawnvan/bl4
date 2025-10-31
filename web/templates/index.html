@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 BL4 Item Serial Code Codec</h1>
+            <p class="subtitle">{{.description}}</p>
+            <div class="version">v{{.version}}</div>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-button active" onclick="showTab('decode')">Decode</button>
+            <button class="tab-button" onclick="showTab('encode')">Encode</button>
+            <button class="tab-button" onclick="showTab('batch')">Batch</button>
+            <button class="tab-button" onclick="showTab('validate')">Validate</button>
+        </nav>
+
+        <!-- Decode Tab -->
+        <div id="decode" class="tab-content active">
+            <div class="card">
+                <h2>🔍 Decode Serial Code</h2>
+                <form id="decodeForm">
+                    <div class="form-group">
+                        <label for="decodeCode">BL4 Serial Code:</label>
+                        <input type="text" id="decodeCode" placeholder="@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="includeBitstream"> Include bitstream data
+                        </label>
+                        <label>
+                            <input type="checkbox" id="includeTokens"> Include token data
+                        </label>
+                    </div>
+                    <button type="submit">Decode</button>
+                </form>
+                <div id="decodeResult" class="result-box" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Encode Tab -->
+        <div id="encode" class="tab-content">
+            <div class="card">
+                <h2>🔧 Encode Item Data</h2>
+                <form id="encodeForm">
+                    <div class="form-group">
+                        <label for="itemLevel">Item Level:</label>
+                        <input type="number" id="itemLevel" min="1" max="100" value="24" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemType">Item Type:</label>
+                        <select id="itemType" required>
+                            <option value="pistol">Pistol</option>
+                            <option value="smg">SMG</option>
+                            <option value="assault_rifle">Assault Rifle</option>
+                            <option value="shotgun">Shotgun</option>
+                            <option value="sniper">Sniper Rifle</option>
+                            <option value="launcher">Launcher</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="manufacturer">Manufacturer:</label>
+                        <select id="manufacturer" required>
+                            <option value="maliwan">Maliwan</option>
+                            <option value="jacobs">Jacobs</option>
+                            <option value="vladof">Vladof</option>
+                            <option value="torgue">Torgue</option>
+                            <option value="dahl">Dahl</option>
+                            <option value="hyperion">Hyperion</option>
+                            <option value="tediore">Tediore</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemName">Item Name (optional):</label>
+                        <input type="text" id="itemName" placeholder="Legendary Weapon">
+                    </div>
+                    <button type="submit">Encode</button>
+                </form>
+                <div id="encodeResult" class="result-box" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Batch Tab -->
+        <div id="batch" class="tab-content">
+            <div class="card">
+                <h2>📦 Batch Processing</h2>
+                <form id="batchForm">
+                    <div class="form-group">
+                        <label for="batchCodes">Serial Codes (one per line):</label>
+                        <textarea id="batchCodes" rows="10" placeholder="@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}
+@AnotherCodeHere
+@YetAnotherCode"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="file" id="batchFile" accept=".txt">
+                            Or upload a text file with codes
+                        </label>
+                    </div>
+                    <button type="submit">Process Batch</button>
+                </form>
+                <div id="batchProgress" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="batchProgressBar" class="progress-fill"></div>
+                    </div>
+                    <div id="batchStatus">Processing...</div>
+                </div>
+                <div id="batchResults" class="result-box" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Validate Tab -->
+        <div id="validate" class="tab-content">
+            <div class="card">
+                <h2>✅ Validate Serial Code</h2>
+                <form id="validateForm">
+                    <div class="form-group">
+                        <label for="validateCode">BL4 Serial Code:</label>
+                        <input type="text" id="validateCode" placeholder="@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}" required>
+                    </div>
+                    <button type="submit">Validate</button>
+                </form>
+                <div id="validateResult" class="result-box" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="status">Ready</span>
+            <span id="apiStatus" class="api-status">🟢 API Connected</span>
+        </div>
+    </div>
+
+    <script>
+        // Set the API base URL from the template
+        window.API_BASE_URL = '{{.api_base}}';
+    </script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

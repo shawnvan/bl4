@@ -8,11 +8,9 @@ import (
 	"github.com/shawnvan/bl4/internal/api/models"
 	"github.com/shawnvan/bl4/internal/codec/base85"
 	"github.com/shawnvan/bl4/internal/codec/bitstream"
-	"github.com/shawnvan/bl4/internal/codec/datatypes"
 	"github.com/shawnvan/bl4/internal/codec/token"
 	"github.com/shawnvan/bl4/pkg/logger"
 	"github.com/shawnvan/bl4/pkg/validator"
-	"go.uber.org/zap"
 )
 
 // Deserializer handles the complete deserialization of BL4 item serial codes
@@ -289,13 +287,13 @@ func (d *Deserializer) extractItemData(tokenStream *token.TokenStream) (*models.
 }
 
 // parseLevel extracts level from a VARINT token
-func (d *Deserializer) parseLevel(token token.Token) (int, error) {
-	if token.Type != token.TokenVARINT {
+func (d *Deserializer) parseLevel(tok token.Token) (int, error) {
+	if tok.Type != token.TokenVARINT {
 		return 0, validator.NewValidationError(validator.ErrCodeInvalidToken,
-			fmt.Sprintf("expected VARINT token for level, got %s", token.Type.String()))
+			fmt.Sprintf("expected VARINT token for level, got %s", tok.Type.String()))
 	}
 
-	value, ok := token.Value.(uint64)
+	value, ok := tok.Value.(uint64)
 	if !ok {
 		return 0, validator.NewValidationError(validator.ErrCodeTokenValueInvalid,
 			"invalid value type for level token")
@@ -304,20 +302,20 @@ func (d *Deserializer) parseLevel(token token.Token) (int, error) {
 	if value > 100 {
 		return 0, validator.NewValidationError(validator.ErrCodeInvalidItemLevel,
 			fmt.Sprintf("level value out of range: %d", value)).
-			WithDetail("valid_range", "1-100")
+			WithDetail("valid_range", "0-100")
 	}
 
 	return int(value), nil
 }
 
 // parseType extracts item type from a VARINT token
-func (d *Deserializer) parseType(token token.Token) (string, error) {
-	if token.Type != token.TokenVARINT {
+func (d *Deserializer) parseType(tok token.Token) (string, error) {
+	if tok.Type != token.TokenVARINT {
 		return "", validator.NewValidationError(validator.ErrCodeInvalidToken,
-			fmt.Sprintf("expected VARINT token for type, got %s", token.Type.String()))
+			fmt.Sprintf("expected VARINT token for type, got %s", tok.Type.String()))
 	}
 
-	value, ok := token.Value.(uint64)
+	value, ok := tok.Value.(uint64)
 	if !ok {
 		return "", validator.NewValidationError(validator.ErrCodeTokenValueInvalid,
 			"invalid value type for type token")
@@ -348,13 +346,13 @@ func (d *Deserializer) parseType(token token.Token) (string, error) {
 }
 
 // parseManufacturer extracts manufacturer from a VARINT token
-func (d *Deserializer) parseManufacturer(token token.Token) (string, error) {
-	if token.Type != token.TokenVARINT {
+func (d *Deserializer) parseManufacturer(tok token.Token) (string, error) {
+	if tok.Type != token.TokenVARINT {
 		return "", validator.NewValidationError(validator.ErrCodeInvalidToken,
-			fmt.Sprintf("expected VARINT token for manufacturer, got %s", token.Type.String()))
+			fmt.Sprintf("expected VARINT token for manufacturer, got %s", tok.Type.String()))
 	}
 
-	value, ok := token.Value.(uint64)
+	value, ok := tok.Value.(uint64)
 	if !ok {
 		return "", validator.NewValidationError(validator.ErrCodeTokenValueInvalid,
 			"invalid value type for manufacturer token")
@@ -388,13 +386,13 @@ func (d *Deserializer) parseManufacturer(token token.Token) (string, error) {
 }
 
 // parsePart extracts part data from a PART token
-func (d *Deserializer) parsePart(token token.Token) (*models.PartData, error) {
-	if token.Type != token.TokenPART {
+func (d *Deserializer) parsePart(tok token.Token) (*models.PartData, error) {
+	if tok.Type != token.TokenPART {
 		return nil, validator.NewValidationError(validator.ErrCodeInvalidToken,
-			fmt.Sprintf("expected PART token, got %s", token.Type.String()))
+			fmt.Sprintf("expected PART token, got %s", tok.Type.String()))
 	}
 
-	partData, ok := token.Value.(map[string]uint64)
+	partData, ok := tok.Value.(map[string]uint64)
 	if !ok {
 		return nil, validator.NewValidationError(validator.ErrCodeTokenValueInvalid,
 			"invalid value type for part token")
@@ -436,20 +434,20 @@ func (d *Deserializer) parsePart(token token.Token) (*models.PartData, error) {
 	part.Name = d.generatePartName(index, value)
 
 	// Add token metadata
-	part.Metadata["token_position"] = token.Position
-	part.Metadata["token_bit_size"] = token.BitSize
+	part.Metadata["token_position"] = tok.Position
+	part.Metadata["token_bit_size"] = tok.BitSize
 
 	return part, nil
 }
 
 // parseString extracts string data from a STRING token
-func (d *Deserializer) parseString(token token.Token, itemData *models.ItemData, index int) error {
-	if token.Type != token.TokenSTRING {
+func (d *Deserializer) parseString(tok token.Token, itemData *models.ItemData, index int) error {
+	if tok.Type != token.TokenSTRING {
 		return validator.NewValidationError(validator.ErrCodeInvalidToken,
-			fmt.Sprintf("expected STRING token, got %s", token.Type.String()))
+			fmt.Sprintf("expected STRING token, got %s", tok.Type.String()))
 	}
 
-	value, ok := token.Value.(string)
+	value, ok := tok.Value.(string)
 	if !ok {
 		return validator.NewValidationError(validator.ErrCodeTokenValueInvalid,
 			"invalid value type for string token")
@@ -508,17 +506,21 @@ func (d *Deserializer) generatePartName(index uint64, value uint64) string {
 }
 
 // generateRawPartsString creates the raw parts string for backward compatibility
-func (d *Deserializer) generateRawPartsString(parts []models.PartData) string {
-	if len(parts) == 0 {
+func (d *Deserializer) generateRawPartsString(partList []models.PartData) string {
+	if len(partList) == 0 {
 		return ""
 	}
 
-	var parts []string
-	for _, part := range parts {
-		parts = append(parts, fmt.Sprintf("%d, %d", part.Index, part.Value))
+	var partsStr []string
+	for _, part := range partList {
+		partsStr = append(partsStr, fmt.Sprintf("%d, %d", part.Index, part.Value))
 	}
 
-	return fmt.Sprintf("%s|| {%s}", strings.Join(parts, "|"), parts[len(parts)-1])
+	if len(partsStr) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("%s|| {%s}", strings.Join(partsStr, "|"), partsStr[len(partsStr)-1])
 }
 
 // createBitstreamInfo creates bitstream information
@@ -592,10 +594,10 @@ func (d *Deserializer) validateResult(result *DeserializationResult) error {
 	}
 
 	// Validate required fields
-	if result.ItemData.Level < 1 || result.ItemData.Level > 100 {
+	if result.ItemData.Level < 0 || result.ItemData.Level > 100 {
 		return validator.NewValidationError(validator.ErrCodeInvalidItemLevel,
 			fmt.Sprintf("invalid item level: %d", result.ItemData.Level)).
-			WithDetail("valid_range", "1-100")
+			WithDetail("valid_range", "0-100")
 	}
 
 	if result.ItemData.Type == "" {
@@ -787,10 +789,10 @@ type BatchDeserializationStats struct {
 // Helper functions
 
 // formatTokenValue formats a token value for display
-func formatTokenValue(token token.Token) interface{} {
-	switch token.Type {
+func formatTokenValue(tok token.Token) interface{} {
+	switch tok.Type {
 	case token.TokenVARBIT:
-		if bits, ok := token.Value.([]bool); ok {
+		if bits, ok := tok.Value.([]bool); ok {
 			var bitStr string
 			for i, bit := range bits {
 				if i > 0 && i%8 == 0 {
@@ -805,21 +807,22 @@ func formatTokenValue(token token.Token) interface{} {
 			return bitStr
 		}
 	case token.TokenSTRING:
-		return token.Value
+		return tok.Value
 	case token.TokenPART:
-		if partData, ok := token.Value.(map[string]uint64); ok {
+		if partData, ok := tok.Value.(map[string]uint64); ok {
 			return fmt.Sprintf("index:%d,value:%d", partData["index"], partData["value"])
 		}
 	}
-	return token.Value
+	return tok.Value
 }
 
 // calculateUniqueValues counts unique values in a token stream
 func calculateUniqueValues(tokenStream *token.TokenStream) int {
-	seen := make(map[interface{}]bool)
+	seen := make(map[string]bool)
 	for _, token := range tokenStream.Tokens {
-		if _, exists := seen[token.Value]; !exists {
-			seen[token.Value] = true
+		key := fmt.Sprintf("%v", token.Value) // Convert to string for hashing
+		if _, exists := seen[key]; !exists {
+			seen[key] = true
 		}
 	}
 	return len(seen)

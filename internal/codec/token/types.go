@@ -12,38 +12,55 @@ const (
 	// TokenUnknown represents an unknown or invalid token type
 	TokenUnknown TokenType = iota
 
-	// TokenVARINT represents a variable-length integer
+	// TokenSEP1 represents a hard separator (00) - 2 bits
+	// Based on reference implementation: TOK_SEP1
+	TokenSEP1
+
+	// TokenSEP2 represents a soft separator (01) - 2 bits
+	// Based on reference implementation: TOK_SEP2
+	TokenSEP2
+
+	// TokenVARINT represents a variable-length integer (100) - 3 bits
 	// Format: [bit_count][value] where bit_count determines the value size
+	// Based on reference implementation: TOK_VARINT
 	TokenVARINT
 
-	// TokenVARBIT represents a variable-length bitfield
-	// Format: [bit_count][bits] where bit_count determines the bitfield size
-	TokenVARBIT
-
-	// TokenPART represents a part or component reference
+	// TokenPART represents a part or component reference (101) - 3 bits
 	// Format: [index][value] referencing a parts database
+	// Based on reference implementation: TOK_PART
 	TokenPART
 
-	// TokenSTRING represents a null-terminated string
+	// TokenVARBIT represents a variable-length bitfield (110) - 3 bits
+	// Format: [bit_count][bits] where bit_count determines the bitfield size
+	// Based on reference implementation: TOK_VARBIT
+	TokenVARBIT
+
+	// TokenSTRING represents a null-terminated string (111) - 3 bits
 	// Format: [length][characters][null_terminator]
+	// Based on reference implementation: TOK_STRING
 	TokenSTRING
 
 	// TokenEOF represents end of bitstream
 	TokenEOF
 
 	// TokenMARKER represents special markers or delimiters
+	// (Legacy from our original implementation, may not be used in new system)
 	TokenMARKER
 )
 
 // String returns the string representation of a TokenType
 func (t TokenType) String() string {
 	switch t {
+	case TokenSEP1:
+		return "SEP1"
+	case TokenSEP2:
+		return "SEP2"
 	case TokenVARINT:
 		return "VARINT"
-	case TokenVARBIT:
-		return "VARBIT"
 	case TokenPART:
 		return "PART"
+	case TokenVARBIT:
+		return "VARBIT"
 	case TokenSTRING:
 		return "STRING"
 	case TokenEOF:
