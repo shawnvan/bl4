@@ -18,12 +18,13 @@ type DecodeResponse struct {
 
 // EncodedItemData represents the successfully decoded item data
 type DecodedItemData struct {
-	SerialCode string                 `json:"serial_code" example:"@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"`
-	ItemData   *ItemData              `json:"item_data"`
-	Bitstream  *BitstreamInfo         `json:"bitstream,omitempty"`
-	Tokens     []TokenInfo            `json:"tokens,omitempty"`
-	RawData    *RawDataInfo           `json:"raw_data,omitempty"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
+	SerialCode      string                 `json:"serial_code" example:"@Ugy3L+2}TYg%$yC%i7M2gZldO)@}cgb!l34$a-qf{00}"`
+	ItemData        *ItemData              `json:"item_data"`
+	Bitstream       *BitstreamInfo         `json:"bitstream,omitempty"`
+	Tokens          []TokenInfo            `json:"tokens,omitempty"`
+	RawData         *RawDataInfo           `json:"raw_data,omitempty"`
+	ReferenceFormat string                 `json:"reference_format,omitempty"` // Reference project format
+	Properties      map[string]interface{} `json:"properties,omitempty"`
 }
 
 // BitstreamInfo contains information about the parsed bitstream
@@ -547,10 +548,12 @@ func formatTokenValue(t token.Token) interface{} {
 
 // calculateUniqueValues counts unique values in a token stream
 func calculateUniqueValues(tokens *token.TokenStream) int {
-	seen := make(map[interface{}]bool)
+	seen := make(map[string]bool)
 	for _, token := range tokens.Tokens {
-		if _, exists := seen[token.Value]; !exists {
-			seen[token.Value] = true
+		// Convert token value to string representation to handle unhashable types
+		valueStr := fmt.Sprintf("%v", token.Value)
+		if _, exists := seen[valueStr]; !exists {
+			seen[valueStr] = true
 		}
 	}
 	return len(seen)

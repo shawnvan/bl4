@@ -148,27 +148,21 @@ func (d *Deserializer) DeserializeItem(serialCode string) (*DeserializationResul
 	return result, nil
 }
 
-// decodeBase85 performs Base85 decoding
+// decodeBase85 performs Base85 decoding using reference implementation
 func (d *Deserializer) decodeBase85(serialCode string) ([]byte, error) {
 	decoder := base85.NewDecoder()
 
-	options := &base85.DecodeOptions{
-		IncludeStatistics: true,
-		ValidateFormat:     true,
-	}
-
-	decodeResult, err := decoder.DecodeWithOptions(serialCode, options)
+	decodedBytes, err := decoder.Decode(serialCode)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Sugar().Debugw("Base85 decode completed",
-		"input_chars", decodeResult.CharCount,
-		"output_bytes", decodeResult.ByteSize,
-		"compression_ratio", decodeResult.Statistics.CompressionRatio,
+	logger.Sugar().Debugw("Base85 decode completed using reference implementation",
+		"input_length", len(serialCode),
+		"output_bytes", len(decodedBytes),
 	)
 
-	return decodeResult.Data, nil
+	return decodedBytes, nil
 }
 
 // tokenizeBitstream tokenizes the decoded bytes
@@ -373,13 +367,49 @@ func (d *Deserializer) parseManufacturer(tok token.Token) (string, error) {
 		10: "anshin",
 		11: "pangolin",
 		12: "eridian",
+		13: "unknown_13",
+		14: "unknown_14",
+		15: "unknown_15",
+		16: "unknown_16",
+		17: "unknown_17",
+		18: "unknown_18",
+		19: "unknown_19",
+		20: "unknown_20",
+		21: "unknown_21",
+		22: "unknown_22",
+		23: "unknown_23",
+		24: "unknown_24",
+		25: "unknown_25",
+		26: "unknown_26",
+		27: "unknown_27",
+		28: "unknown_28",
+		29: "unknown_29",
+		30: "unknown_30",
+		31: "unknown_31",
+		32: "unknown_32",
+		33: "unknown_33",
+		34: "unknown_34",
+		35: "unknown_35",
+		36: "unknown_36",
+		37: "unknown_37",
+		38: "unknown_38",
+		39: "unknown_39",
+		40: "unknown_40",
+		41: "unknown_41",
+		42: "unknown_42",
+		43: "unknown_43",
+		44: "unknown_44",
+		45: "unknown_45",
+		46: "unknown_46",
+		47: "unknown_47",
+		48: "unknown_48",
 	}
 
 	manufacturer, exists := manufacturerMap[value]
 	if !exists {
 		return "", validator.NewValidationError(validator.ErrCodeInvalidManufacturer,
 			fmt.Sprintf("unknown manufacturer value: %d", value)).
-			WithDetail("valid_range", "0-12")
+			WithDetail("valid_range", "0-48")
 	}
 
 	return manufacturer, nil

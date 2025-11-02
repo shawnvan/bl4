@@ -268,37 +268,62 @@ class BL4Codec {
         resultBox.style.display = 'block';
 
         let html = '<h3>✅ Decode Successful</h3>';
-        html += `<p><strong>Serial Code:</strong> ${result.serial_code}</p>`;
 
-        if (result.item_data) {
-            html += '<h4>Item Data:</h4>';
-            html += `<p><strong>Level:</strong> ${result.item_data.level}</p>`;
-            html += `<p><strong>Type:</strong> ${result.item_data.type}</p>`;
-            html += `<p><strong>Manufacturer:</strong> ${result.item_data.manufacturer}</p>`;
+        // Debug: Log the result structure
+        console.log('Decode Result:', result);
 
-            if (result.item_data.name) {
-                html += `<p><strong>Name:</strong> ${result.item_data.name}</p>`;
+        // Fix: Access serial_code from result.data.serial_code
+        const serialCode = result.data?.serial_code || 'Unknown';
+        html += `<p><strong>Serial Code:</strong> <code style="background: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${serialCode}</code></p>`;
+
+        // Add reference format if available
+        if (result.data?.reference_format) {
+            html += `<p><strong>Reference Format:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px; font-family: monospace; display: block; margin-top: 4px; word-break: break-all;">${result.data.reference_format}</code></p>`;
+        }
+
+        if (result.data?.item_data) {
+            const itemData = result.data.item_data;
+            html += '<h4>📦 Item Data:</h4>';
+            html += `<p><strong>Level:</strong> ${itemData.level}</p>`;
+            html += `<p><strong>Type:</strong> ${itemData.type}</p>`;
+            html += `<p><strong>Manufacturer:</strong> ${itemData.manufacturer}</p>`;
+
+            if (itemData.name) {
+                html += `<p><strong>Name:</strong> ${itemData.name}</p>`;
             }
 
-            if (result.item_data.rarity) {
-                html += `<p><strong>Rarity:</strong> ${result.item_data.rarity}</p>`;
+            if (itemData.rarity) {
+                html += `<p><strong>Rarity:</strong> ${itemData.rarity}</p>`;
             }
 
-            if (result.item_data.parts && result.item_data.parts.length > 0) {
-                html += '<h5>Parts:</h5>';
-                result.item_data.parts.forEach((part, index) => {
-                    html += `<p>Part ${index + 1}: ${part.type} (Value: ${part.value})</p>`;
+            if (itemData.parts && itemData.parts.length > 0) {
+                html += '<h5>🔧 Parts:</h5>';
+                html += '<ul style="margin: 10px 0; padding-left: 20px;">';
+                itemData.parts.forEach((part, index) => {
+                    html += `<li><strong>Part ${index + 1}:</strong> ${part.type} (Value: ${part.value})</li>`;
                 });
+                html += '</ul>';
             }
         }
 
-        if (result.duration_ms) {
-            html += `<p><em>Processing time: ${result.duration_ms}ms</em></p>`;
+        // Add bitstream info if available
+        if (result.data?.bitstream) {
+            const bitstream = result.data.bitstream;
+            html += '<h4>🔢 Bitstream Info:</h4>';
+            html += `<p><strong>Size:</strong> ${bitstream.size} bits (${bitstream.byte_size} bytes)</p>`;
+            html += `<p><strong>Format:</strong> ${bitstream.format}</p>`;
+            if (bitstream.statistics) {
+                html += `<p><strong>Token Count:</strong> ${bitstream.statistics.token_count}</p>`;
+            }
         }
 
-        // Show raw JSON
-        html += '<details><summary>Raw JSON</summary>';
-        html += `<pre>${JSON.stringify(result, null, 2)}</pre></details>`;
+        if (result.metadata?.duration) {
+            html += `<p><em>⏱️ Processing time: ${result.metadata.duration}μs</em></p>`;
+        }
+
+        // Show raw JSON in collapsible section
+        html += '<details style="margin-top: 20px;"><summary>📋 Raw JSON Response</summary>';
+        html += `<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${JSON.stringify(result, null, 2)}</pre></details>`;
 
         resultBox.innerHTML = html;
     }
@@ -309,22 +334,26 @@ class BL4Codec {
         resultBox.style.display = 'block';
 
         let html = '<h3>✅ Encode Successful</h3>';
-        html += `<p><strong>Generated Serial Code:</strong></p>`;
-        html += `<p style="font-family: monospace; font-size: 1.1em; background: #f0f0f0; padding: 10px; border-radius: 4px;">${result.serial_code}</p>`;
 
-        if (result.item_data) {
+        // Fix: Access serial_code from result.data.serial_code
+        const serialCode = result.data?.serial_code || 'Unknown';
+        html += `<p><strong>Generated Serial Code:</strong></p>`;
+        html += `<p style="font-family: monospace; font-size: 1.1em; background: #f0f0f0; padding: 10px; border-radius: 4px;">${serialCode}</p>`;
+
+        if (result.data?.item_data) {
+            const itemData = result.data.item_data;
             html += '<h4>Encoded Item Data:</h4>';
-            html += `<p><strong>Level:</strong> ${result.item_data.level}</p>`;
-            html += `<p><strong>Type:</strong> ${result.item_data.type}</p>`;
-            html += `<p><strong>Manufacturer:</strong> ${result.item_data.manufacturer}</p>`;
+            html += `<p><strong>Level:</strong> ${itemData.level}</p>`;
+            html += `<p><strong>Type:</strong> ${itemData.type}</p>`;
+            html += `<p><strong>Manufacturer:</strong> ${itemData.manufacturer}</p>`;
         }
 
-        if (result.duration_ms) {
-            html += `<p><em>Processing time: ${result.duration_ms}ms</em></p>`;
+        if (result.metadata?.duration) {
+            html += `<p><em>Processing time: ${result.metadata.duration}μs</em></p>`;
         }
 
         // Copy button
-        html += `<button onclick="navigator.clipboard.writeText('${result.serial_code}')">Copy Code</button>`;
+        html += `<button onclick="navigator.clipboard.writeText('${serialCode}')">Copy Code</button>`;
 
         resultBox.innerHTML = html;
     }
@@ -334,33 +363,51 @@ class BL4Codec {
         resultBox.className = 'result-box success';
         resultBox.style.display = 'block';
 
+        // Debug: Log the result structure
+        console.log('Batch Results:', result);
+
         let html = `<h3>✅ Batch Processing Complete</h3>`;
-        html += `<p>Processed ${result.total_codes || 0} codes</p>`;
+
+        // Show statistics if available
+        if (result.statistics) {
+            const stats = result.statistics;
+            html += `<p>Processed ${stats.total || 0} codes (${stats.successful || 0} successful, ${stats.failed || 0} failed)</p>`;
+            if (stats.success_rate !== undefined) {
+                html += `<p>Success Rate: ${(stats.success_rate * 100).toFixed(1)}%</p>`;
+            }
+        } else {
+            html += `<p>Processed ${result.total_codes || 0} codes</p>`;
+        }
 
         if (result.results && result.results.length > 0) {
             html += '<table class="batch-results-table">';
-            html += '<thead><tr><th>#</th><th>Serial Code</th><th>Status</th><th>Item Type</th><th>Level</th></tr></thead>';
+            html += '<thead><tr><th>#</th><th>Serial Code</th><th>Status</th><th>Item Type</th><th>Level</th><th>Manufacturer</th></tr></thead>';
             html += '<tbody>';
 
             result.results.forEach((item, index) => {
                 const statusClass = item.success ? 'status-success' : 'status-error';
                 const status = item.success ? 'Success' : 'Error';
-                const itemType = item.item_data ? item.item_data.type : 'N/A';
-                const level = item.item_data ? item.item_data.level : 'N/A';
+                const itemType = item.data?.item_data?.type || 'N/A';
+                const level = item.data?.item_data?.level || 'N/A';
+                const manufacturer = item.data?.item_data?.manufacturer || 'N/A';
 
                 html += `<tr>
                     <td>${index + 1}</td>
-                    <td style="font-family: monospace;">${item.serial_code}</td>
+                    <td style="font-family: monospace; font-size: 0.9em;">${item.serial_code || 'N/A'}</td>
                     <td class="${statusClass}">${status}</td>
                     <td>${itemType}</td>
                     <td>${level}</td>
+                    <td>${manufacturer}</td>
                 </tr>`;
             });
 
             html += '</tbody></table>';
         }
 
-        if (result.duration_ms) {
+        // Show processing time from metadata if available
+        if (result.metadata?.duration) {
+            html += `<p><em>Total processing time: ${result.metadata.duration}ms</em></p>`;
+        } else if (result.duration_ms) {
             html += `<p><em>Total processing time: ${result.duration_ms}ms</em></p>`;
         }
 
@@ -370,19 +417,52 @@ class BL4Codec {
     showValidateResult(result) {
         const resultBox = document.getElementById('validateResult');
 
-        if (result.valid) {
+        // Debug: Log the result structure
+        console.log('Validate Result:', result);
+
+        // Check if result is valid based on the API response structure
+        const isValid = result.valid === true;
+        const serialCode = result.serial_code || 'Unknown';
+        const error = result.error || null;
+        const errorType = result.error_type || null;
+        const issues = result.issues || [];
+        const length = result.length || 0;
+        const base85Length = result.base85_length || 0;
+
+        if (isValid) {
             resultBox.className = 'result-box success';
             let html = '<h3>✅ Valid Serial Code</h3>';
-            html += `<p><strong>Code:</strong> ${result.serial_code}</p>`;
-            html += `<p><strong>Length:</strong> ${result.length} characters</p>`;
-            html += `<p><strong>Format:</strong> Valid Base85 encoding</p>`;
+            html += `<p><strong>Code:</strong> <code style="background: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${serialCode}</code></p>`;
+            html += `<p><strong>Length:</strong> ${length} characters</p>`;
+            html += `<p><strong>Base85 Length:</strong> ${base85Length} characters</p>`;
+            html += `<p><strong>Format:</strong> ✅ Valid BL4 serial code</p>`;
             resultBox.innerHTML = html;
             this.updateStatus('Code is valid', 'success');
         } else {
             resultBox.className = 'result-box error';
             let html = '<h3>❌ Invalid Serial Code</h3>';
-            html += `<p><strong>Code:</strong> ${result.serial_code}</p>`;
-            html += `<p><strong>Error:</strong> ${result.error || 'Invalid format'}</p>`;
+            html += `<p><strong>Code:</strong> <code style="background: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${serialCode}</code></p>`;
+
+            if (error) {
+                html += `<p><strong>Error:</strong> ${error}</p>`;
+            }
+
+            if (errorType) {
+                html += `<p><strong>Error Type:</strong> ${errorType}</p>`;
+            }
+
+            if (issues && issues.length > 0) {
+                html += '<p><strong>Issues:</strong></p>';
+                html += '<ul style="margin: 10px 0; padding-left: 20px;">';
+                issues.forEach(issue => {
+                    html += `<li>${issue}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            html += `<p><strong>Length:</strong> ${length} characters</p>`;
+            html += `<p><strong>Base85 Length:</strong> ${base85Length} characters</p>`;
+
             resultBox.innerHTML = html;
             this.updateStatus('Code is invalid', 'error');
         }

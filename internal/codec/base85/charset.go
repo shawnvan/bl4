@@ -9,6 +9,7 @@ var (
 	ErrInvalidBase85Char = errors.New("invalid Base85 character")
 	ErrInvalidBase85Len  = errors.New("invalid Base85 data length")
 	ErrInvalidPrefix     = errors.New("missing @U prefix")
+	MaxEncodedSize       = 1024 * 1024 // 1MB max encoded size
 )
 
 // Charset defines the character set and lookup tables for Base85 encoding/decoding

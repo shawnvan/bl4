@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shawnvan/bl4/internal/api/formatter"
 	"github.com/shawnvan/bl4/internal/api/models"
 	"github.com/shawnvan/bl4/internal/api/services"
 	"github.com/shawnvan/bl4/internal/codec/serial"
@@ -78,6 +79,11 @@ func (h *DecodeHandler) HandleDecode(c *gin.Context) {
 			ItemData:   deserializationResult.ItemData,
 		},
 		Metadata: models.NewResponseMetadata(),
+	}
+
+	// Add reference format string
+	if deserializationResult.TokenStream != nil {
+		response.Data.ReferenceFormat = formatter.FormatAsCustomReference(deserializationResult.TokenStream)
 	}
 
 	// Add bitstream info if requested

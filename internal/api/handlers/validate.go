@@ -110,17 +110,17 @@ func (h *ValidateHandler) validateSerialCode(code string) models.ComprehensiveVa
 		return response
 	}
 
-	// Check @ prefix
-	if !strings.HasPrefix(code, "@") {
+	// Check @U prefix (BL4 serial codes require @U prefix)
+	if !strings.HasPrefix(code, "@U") {
 		response.Valid = false
-		response.Error = "BL4 serial codes must start with '@'"
+		response.Error = "BL4 serial codes must start with '@U'"
 		response.ErrorType = "format_error"
-		response.Issues = append(response.Issues, "Missing @ prefix")
+		response.Issues = append(response.Issues, "Missing @U prefix")
 		return response
 	}
 
 	// Extract Base85 part
-	b85Part := code[1:]
+	b85Part := code[2:]
 	response.Base85Length = len(b85Part)
 
 	// Validate Base85 characters
@@ -133,9 +133,9 @@ func (h *ValidateHandler) validateSerialCode(code string) models.ComprehensiveVa
 	}
 
 	// Check length constraints
-	if len(b85Part) < 10 {
+	if len(b85Part) < 1 {
 		response.Valid = false
-		response.Error = "Serial code too short (minimum 10 characters after @)"
+		response.Error = "Serial code too short (minimum 1 character after @U)"
 		response.ErrorType = "length_error"
 		response.Issues = append(response.Issues, "Too short")
 		return response
@@ -143,7 +143,7 @@ func (h *ValidateHandler) validateSerialCode(code string) models.ComprehensiveVa
 
 	if len(b85Part) > 1000 {
 		response.Valid = false
-		response.Error = "Serial code too long (maximum 1000 characters after @)"
+		response.Error = "Serial code too long (maximum 1000 characters after @U)"
 		response.ErrorType = "length_error"
 		response.Issues = append(response.Issues, "Too long")
 		return response
@@ -195,14 +195,14 @@ func (h *ValidateHandler) validateBasicFormat(code string) error {
 
 // validateBase85Characters validates that all characters are valid Base85
 func (h *ValidateHandler) validateBase85Characters(data string) error {
-	// Base85 valid character set (Z85 variant)
-	validChars := regexp.MustCompile(`^[0-9A-Za-z!#$%&()*+\-;<=>?@^_\{\|\}~]+$`)
+	// Base85 valid character set (Z85 variant) - must match decoder character set exactly
+	validChars := regexp.MustCompile(`^[0-9A-Za-z!#$%&()*+\-;<=>?@^_\{\|/\}~]+$`)
 
 	if !validChars.MatchString(data) {
-		// Find invalid characters
+		// Find invalid characters - use same character set as decoder
 		invalidChars := ""
 		for _, r := range data {
-			if !strings.ContainsRune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~", r) {
+			if !strings.ContainsRune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}/~", r) {
 				invalidChars += string(r)
 			}
 		}
@@ -215,7 +215,9 @@ func (h *ValidateHandler) validateBase85Characters(data string) error {
 // validateBase85Structure attempts to decode to validate structure
 func (h *ValidateHandler) validateBase85Structure(data string) error {
 	decoder := base85.NewDecoder()
-	_, err := decoder.Decode(data)
+	// The decoder expects the full @U prefix, so add it back
+	fullCode := "@U" + data
+	_, err := decoder.Decode(fullCode)
 	if err != nil {
 		return fmt.Errorf("base85 decode failed: %w", err)
 	}

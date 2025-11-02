@@ -118,28 +118,22 @@ func (s *Serializer) SerializeItem(itemData *models.ItemData) (*SerializationRes
 	}
 	result.BitstreamData = bitstreamData
 
-	// Step 4: Encode bitstream to Base85
+	// Step 4: Encode bitstream to Base85 using reference implementation
 	encoder := base85.NewEncoder()
-	encodeOptions := &base85.EncodeOptions{
-		IncludeStatistics: true,
-		ValidateFormat:     true,
-		OptimizeSize:       s.options.OptimizeSize,
-		TargetVersion:      s.options.TargetVersion,
-	}
 
-	encodeResult, err := encoder.EncodeWithOptions(bitstreamData, encodeOptions)
+	result.SerialCode, err = encoder.Encode(bitstreamData)
 	if err != nil {
 		result.Error = err
 		result.Duration = time.Since(startTime)
 		return result, fmt.Errorf("Base85 encoding failed: %w", err)
 	}
 
-	result.SerialCode = encodeResult.SerialCode
-	result.EncodingInfo = encodeResult
+	// Note: With reference implementation, we don't have detailed encoding info
+	// but the result is more compatible with the game format
 
 	// Step 5: Add additional metadata if requested
 	if s.options.IncludeMetadata {
-		result.Metadata = s.createMetadata(itemData, tokenStream, encodeResult)
+		result.Metadata = s.createMetadata(itemData, tokenStream, result.SerialCode)
 	}
 
 	// Step 6: Validate result
@@ -351,6 +345,11 @@ func (s *Serializer) addStringTokens(tokenStream *token.TokenStream, itemData *m
 func (s *Serializer) createBitstream(tokenStream *token.TokenStream) ([]byte, error) {
 	writer := bitstream.NewWriterFromBytes(1024) // Start with 1KB buffer
 
+	// Write magic header (0010000) - required for BL4 serial codes
+	if err := writer.WriteBits(0x10, 7); err != nil {
+		return nil, fmt.Errorf("failed to write magic header: %w", err)
+	}
+
 	for _, tok := range tokenStream.Tokens {
 		if err := s.writeToken(writer, tok); err != nil {
 			return nil, fmt.Errorf("failed to write token at position %d: %w", tok.Position, err)
@@ -380,8 +379,8 @@ func (s *Serializer) writeToken(writer *bitstream.Writer, tok token.Token) error
 			return validator.NewValidationError(validator.ErrCodeTokenValueInvalid,
 				"invalid value type for VARINT token")
 		}
-		// Use 8 bits for standard game values
-		return datatypes.EncodeVARINT(writer, value, 8)
+		// Use reference implementation (block-based VARINT)
+		return datatypes.EncodeVARINTReference(writer, value)
 
 	case token.TokenPART:
 		partData, ok := tok.Value.(map[string]uint64)
@@ -464,6 +463,29 @@ func (s *Serializer) encodeManufacturer(manufacturer string) (uint64, error) {
 		"anshin":     10,
 		"pangolin":   11,
 		"eridian":    12,
+		"unknown_26": 26,
+		"unknown_27": 27,
+		"unknown_28": 28,
+		"unknown_29": 29,
+		"unknown_30": 30,
+		"unknown_31": 31,
+		"unknown_32": 32,
+		"unknown_33": 33,
+		"unknown_34": 34,
+		"unknown_35": 35,
+		"unknown_36": 36,
+		"unknown_37": 37,
+		"unknown_38": 38,
+		"unknown_39": 39,
+		"unknown_40": 40,
+		"unknown_41": 41,
+		"unknown_42": 42,
+		"unknown_43": 43,
+		"unknown_44": 44,
+		"unknown_45": 45,
+		"unknown_46": 46,
+		"unknown_47": 47,
+		"unknown_48": 48,
 	}
 
 	value, exists := manufacturerMap[strings.ToLower(manufacturer)]
@@ -477,7 +499,7 @@ func (s *Serializer) encodeManufacturer(manufacturer string) (uint64, error) {
 }
 
 // createMetadata creates additional metadata for the serialization result
-func (s *Serializer) createMetadata(itemData *models.ItemData, tokenStream *token.TokenStream, encodeResult *base85.EncodeResult) map[string]interface{} {
+func (s *Serializer) createMetadata(itemData *models.ItemData, tokenStream *token.TokenStream, serialCode string) map[string]interface{} {
 	metadata := make(map[string]interface{})
 
 	// Add processing metadata
@@ -486,14 +508,11 @@ func (s *Serializer) createMetadata(itemData *models.ItemData, tokenStream *toke
 	metadata["token_count"] = tokenStream.Size()
 	metadata["part_count"] = len(itemData.Parts)
 
-	// Add encoding statistics if available
-	if encodeResult.Statistics != nil {
-		metadata["encoding_stats"] = encodeResult.Statistics
-	}
-
-	// Add optimization info if available
-	if encodeResult.Optimization != nil {
-		metadata["optimization"] = encodeResult.Optimization
+	// Add basic encoding info using reference implementation data
+	metadata["encoding_info"] = map[string]interface{}{
+		"serial_length": len(serialCode),
+		"implementation": "reference",
+		"algorithm": "base85_with_byte_mirroring",
 	}
 
 	// Add item summary
@@ -533,7 +552,7 @@ type SerializationResult struct {
 	ItemData      *models.ItemData             `json:"item_data,omitempty"`
 	TokenStream   *token.TokenStream           `json:"-"`
 	BitstreamData []byte                       `json:"bitstream_data,omitempty"`
-	EncodingInfo  *base85.EncodeResult        `json:"encoding_info,omitempty"`
+	EncodingInfo  map[string]interface{}        `json:"encoding_info,omitempty"`
 	Metadata      map[string]interface{}       `json:"metadata,omitempty"`
 	StartTime     time.Time                    `json:"start_time"`
 	Duration     time.Duration                `json:"duration_ms"`

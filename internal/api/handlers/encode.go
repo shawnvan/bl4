@@ -93,9 +93,9 @@ func (h *EncodeHandler) HandleEncode(c *gin.Context) {
 	// Add encoding info if available
 	if serializationResult.EncodingInfo != nil {
 		response.Data.AddEncodingInfo(
-			serializationResult.EncodingInfo.Statistics,
-			serializationResult.EncodingInfo.FormatValidation,
-			serializationResult.EncodingInfo.Optimization,
+			serializationResult.EncodingInfo["statistics"],
+			serializationResult.EncodingInfo["validation"],
+			serializationResult.EncodingInfo["optimization"],
 		)
 	}
 

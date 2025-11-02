@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/shawnvan/bl4/internal/codec/bitstream"
+	"github.com/shawnvan/bl4/internal/utils"
 )
 
 var (
@@ -151,8 +152,8 @@ func (t *Tokenizer) parseVARINT(startPos int64) (Token, error) {
 		}
 
 		// Apply 4-bit mirroring (as in reference implementation)
-		// For now, we'll skip the mirroring as our bytes are already mirrored
-		output |= uint64(block) << dataRead
+		mirroredBlock := utils.Mirror4Bits(byte(block))
+		output |= uint64(mirroredBlock) << dataRead
 		dataRead += VARINT_BITS_PER_BLOCK
 
 		// Read continuation bit
