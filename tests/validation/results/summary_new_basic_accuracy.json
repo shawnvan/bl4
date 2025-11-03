@@ -1,0 +1,12 @@
+{
+  "algorithm_name": "new",
+  "test_name": "basic_accuracy",
+  "total_tests": 500,
+  "passed_tests": 0,
+  "failed_tests": 500,
+  "accuracy_rate": 0,
+  "average_time_ns": 88,
+  "min_time_ns": 41,
+  "max_time_ns": 2125,
+  "timestamp": "2025-11-03T17:23:39.850191+08:00"
+}

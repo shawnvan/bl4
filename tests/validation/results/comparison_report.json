@@ -1,0 +1,13 @@
+{
+  "algorithms": [
+    "current",
+    "reference",
+    "new"
+  ],
+  "generated_at": "2025-11-03T17:23:39.857835+08:00",
+  "summary": "Comprehensive validation comparison report generated",
+  "test_types": [
+    "accuracy",
+    "performance"
+  ]
+}

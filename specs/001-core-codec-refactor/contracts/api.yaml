@@ -1,0 +1,565 @@
+openapi: 3.0.3
+info:
+  title: BL4 Item Codec API
+  description: RESTful API for Borderlands 4 item serial code encoding and decoding
+  version: 1.0.0
+  contact:
+    name: BL4 Project
+    url: https://github.com/shawnvan/bl4
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.bl4.example.com
+    description: Production server
+
+paths:
+  /api/v1/items/decode:
+    post:
+      summary: Decode a single item serial code
+      description: Decode a Base85 item serial code into structured item data
+      operationId: decodeItem
+      tags:
+        - Items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecodeRequest'
+            examples:
+              simple:
+                summary: Simple item decode
+                value:
+                  serial_code: "@Ugy3L+2}TYgAAAABkAAAAAA"
+                  options:
+                    include_debug: false
+                    include_raw_bytes: true
+                    validate_checksum: true
+      responses:
+        '200':
+          description: Successful decoding
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecodeResponse'
+              examples:
+                success:
+                  summary: Successful decode
+                  value:
+                    success: true
+                    serial_code: "@Ugy3L+2}TYgAAAABkAAAAAA"
+                    item_data:
+                      level: 24
+                      type: "pistol"
+                      manufacturer: "maliwan"
+                      rarity: "legendary"
+                      parts:
+                        - index: 3379
+                          value: 50
+                          type: "barrel"
+                    decoded_bytes: "AQAAAAAAAgAAAAEAAAAQAAAABkAAAAAA"
+                    duration_ms: 0.2
+                    stats:
+                      bytes_processed: 24
+                      tokens_generated: 8
+                      parts_identified: 1
+                      memory_usage: 1024
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/items/encode:
+    post:
+      summary: Encode item data to serial code
+      description: Encode structured item data into a Base85 serial code
+      operationId: encodeItem
+      tags:
+        - Items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EncodeRequest'
+            examples:
+              simple:
+                summary: Simple item encode
+                value:
+                  item_data:
+                    level: 24
+                    type: "pistol"
+                    manufacturer: "maliwan"
+                    rarity: "legendary"
+                    parts:
+                      - index: 3379
+                        value: 50
+                        type: "barrel"
+                  options:
+                    validate_checksum: true
+      responses:
+        '200':
+          description: Successful encoding
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncodeResponse'
+              examples:
+                success:
+                  summary: Successful encode
+                  value:
+                    success: true
+                    item_data:
+                      level: 24
+                      type: "pistol"
+                      manufacturer: "maliwan"
+                      rarity: "legendary"
+                      parts:
+                        - index: 3379
+                          value: 50
+                          type: "barrel"
+                    serial_code: "@Ugy3L+2}TYgAAAABkAAAAAA"
+                    duration_ms: 0.15
+                    stats:
+                      bytes_processed: 24
+                      tokens_generated: 8
+                      parts_identified: 1
+                      memory_usage: 1024
+
+  /api/v1/items/batch/decode:
+    post:
+      summary: Decode multiple item serial codes
+      description: Decode a batch of Base85 item serial codes into structured item data
+      operationId: decodeBatch
+      tags:
+        - Items
+        - Batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDecodeRequest'
+            examples:
+              batch:
+                summary: Batch decode
+                value:
+                  serial_codes:
+                    - "@Ugy3L+2}TYgAAAABkAAAAAA"
+                    - "@Ugy3L+2}TYgAAAABkAAAAAB"
+                  options:
+                    include_debug: false
+                    include_raw_bytes: false
+                    validate_checksum: true
+      responses:
+        '200':
+          description: Successful batch decoding
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchDecodeResponse'
+
+  /api/v1/items/validate:
+    post:
+      summary: Validate item serial code
+      description: Validate a Base85 item serial code format and structure
+      operationId: validateItem
+      tags:
+        - Items
+        - Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateResponse'
+
+  /api/v1/health:
+    get:
+      summary: Health check
+      description: Check API health status
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    DecodeRequest:
+      type: object
+      required:
+        - serial_code
+      properties:
+        serial_code:
+          type: string
+          description: Base85 item serial code to decode
+          example: "@Ugy3L+2}TYgAAAABkAAAAAA"
+          minLength: 1
+          maxLength: 1000
+        options:
+          $ref: '#/components/schemas/ProcessingOptions'
+
+    DecodeResponse:
+      type: object
+      required:
+        - success
+        - serial_code
+        - duration_ms
+        - stats
+      properties:
+        success:
+          type: boolean
+          description: Whether decoding was successful
+        serial_code:
+          type: string
+          description: The input serial code
+        item_data:
+          $ref: '#/components/schemas/ItemData'
+        decoded_bytes:
+          type: string
+          description: Raw decoded bytes in base64
+          format: byte
+        tokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/Token'
+          description: Token stream (debug mode only)
+        duration_ms:
+          type: number
+          format: double
+          description: Processing duration in milliseconds
+        stats:
+          $ref: '#/components/schemas/ProcessingStats'
+        error:
+          $ref: '#/components/schemas/Error'
+
+    EncodeRequest:
+      type: object
+      required:
+        - item_data
+      properties:
+        item_data:
+          $ref: '#/components/schemas/ItemData'
+        options:
+          $ref: '#/components/schemas/ProcessingOptions'
+
+    EncodeResponse:
+      type: object
+      required:
+        - success
+        - item_data
+        - duration_ms
+        - stats
+      properties:
+        success:
+          type: boolean
+          description: Whether encoding was successful
+        item_data:
+          $ref: '#/components/schemas/ItemData'
+        serial_code:
+          type: string
+          description: Generated Base85 serial code
+          example: "@Ugy3L+2}TYgAAAABkAAAAAA"
+        duration_ms:
+          type: number
+          format: double
+          description: Processing duration in milliseconds
+        stats:
+          $ref: '#/components/schemas/ProcessingStats'
+        error:
+          $ref: '#/components/schemas/Error'
+
+    BatchDecodeRequest:
+      type: object
+      required:
+        - serial_codes
+      properties:
+        serial_codes:
+          type: array
+          items:
+            type: string
+          description: List of serial codes to decode
+          minItems: 1
+          maxItems: 1000
+        options:
+          $ref: '#/components/schemas/ProcessingOptions'
+
+    BatchDecodeResponse:
+      type: object
+      required:
+        - total_count
+        - successful_count
+        - failed_count
+        - results
+        - summary
+      properties:
+        total_count:
+          type: integer
+          description: Total items processed
+        successful_count:
+          type: integer
+          description: Successfully decoded items
+        failed_count:
+          type: integer
+          description: Failed decode attempts
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecodeResponse'
+        summary:
+          $ref: '#/components/schemas/BatchSummary'
+
+    ValidateRequest:
+      type: object
+      required:
+        - serial_code
+      properties:
+        serial_code:
+          type: string
+          description: Base85 item serial code to validate
+
+    ValidateResponse:
+      type: object
+      required:
+        - valid
+        - serial_code
+      properties:
+        valid:
+          type: boolean
+          description: Whether the serial code is valid
+        serial_code:
+          type: string
+          description: The validated serial code
+        issues:
+          type: array
+          items:
+            type: string
+          description: List of validation issues
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Suggestions for fixing issues
+
+    ItemData:
+      type: object
+      required:
+        - level
+        - type
+        - manufacturer
+        - rarity
+        - parts
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Item level
+        type:
+          type: string
+          description: Item type
+          example: "pistol"
+        manufacturer:
+          type: string
+          description: Item manufacturer
+          example: "maliwan"
+        rarity:
+          type: string
+          description: Item rarity
+          enum: ["common", "uncommon", "rare", "epic", "legendary"]
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartData'
+        properties:
+          type: object
+          additionalProperties: true
+          description: Additional item properties
+        version:
+          type: string
+          description: Game version
+        checksum:
+          type: string
+          description: Item data checksum
+
+    PartData:
+      type: object
+      required:
+        - index
+        - value
+      properties:
+        index:
+          type: integer
+          format: int16
+          description: Part index
+          minimum: 0
+          maximum: 65535
+        value:
+          type: integer
+          format: int16
+          description: Part value
+          minimum: 0
+          maximum: 65535
+        sub_parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartData'
+          description: Nested parts
+        type:
+          type: string
+          description: Part type classification
+          example: "barrel"
+
+    Token:
+      type: object
+      required:
+        - type
+        - value
+        - bit_count
+        - position
+      properties:
+        type:
+          type: integer
+          description: Token type identifier
+          enum: [0, 1, 4, 5, 6, 7]
+        value:
+          type: string
+          format: byte
+          description: Token value in base64
+        bit_count:
+          type: integer
+          description: Number of bits
+        position:
+          type: integer
+          description: Position in bitstream
+
+    ProcessingOptions:
+      type: object
+      properties:
+        include_debug:
+          type: boolean
+          default: false
+          description: Include debug information
+        include_raw_bytes:
+          type: boolean
+          default: false
+          description: Include raw decoded bytes
+        validate_checksum:
+          type: boolean
+          default: true
+          description: Validate item data checksums
+
+    ProcessingStats:
+      type: object
+      required:
+        - bytes_processed
+        - tokens_generated
+        - parts_identified
+        - memory_usage
+      properties:
+        bytes_processed:
+          type: integer
+          description: Number of bytes processed
+        tokens_generated:
+          type: integer
+          description: Number of tokens generated
+        parts_identified:
+          type: integer
+          description: Number of parts identified
+        memory_usage:
+          type: integer
+          description: Memory usage in bytes
+
+    BatchSummary:
+      type: object
+      required:
+        - total_duration_ms
+        - average_duration_ms
+        - total_memory_usage
+      properties:
+        total_duration_ms:
+          type: number
+          format: double
+          description: Total processing time in milliseconds
+        average_duration_ms:
+          type: number
+          format: double
+          description: Average processing time per item
+        total_memory_usage:
+          type: integer
+          format: int64
+          description: Total memory usage in bytes
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        position:
+          type: integer
+          description: Error position in input
+        suggestion:
+          type: string
+          description: Suggested fix
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "unhealthy"]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: string
+        memory_usage:
+          type: integer
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - ApiKeyAuth: []
+  - {}

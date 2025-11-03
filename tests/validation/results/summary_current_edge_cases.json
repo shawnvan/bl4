@@ -1,0 +1,12 @@
+{
+  "algorithm_name": "current",
+  "test_name": "edge_cases",
+  "total_tests": 4,
+  "passed_tests": 0,
+  "failed_tests": 4,
+  "accuracy_rate": 0,
+  "average_time_ns": 124,
+  "min_time_ns": 83,
+  "max_time_ns": 166,
+  "timestamp": "2025-11-03T17:23:39.857755+08:00"
+}

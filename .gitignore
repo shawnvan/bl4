@@ -72,4 +72,4 @@ test-fixtures/
 
 # Documentation build
 docs/_build/
-docs/site/
+docs/site/reference/

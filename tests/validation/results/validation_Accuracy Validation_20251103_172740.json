@@ -1,0 +1,63 @@
+{
+  "suite_name": "Accuracy Validation",
+  "description": "Validate algorithm accuracy against expected decoded values",
+  "test_results": [
+    {
+      "test_name": "Decode @Ug",
+      "test_type": "accuracy",
+      "serial_code": "@Ug",
+      "expected_output": "UNKNOWN",
+      "actual_output": "decoded_@Ug",
+      "matches": false,
+      "error_type": "MissingExpectedValue",
+      "error_message": "No expected value found for serial code",
+      "processing_time_ns": 78459,
+      "timestamp": "2025-11-03T17:27:40.849413+08:00"
+    },
+    {
+      "test_name": "Decode @Ugy3L+2}TYgAAAABkAA",
+      "test_type": "accuracy",
+      "serial_code": "@Ugy3L+2}TYgAAAABkAAAAAA",
+      "expected_output": "UNKNOWN",
+      "actual_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAA",
+      "matches": false,
+      "error_type": "MissingExpectedValue",
+      "error_message": "No expected value found for serial code",
+      "processing_time_ns": 73792,
+      "timestamp": "2025-11-03T17:27:40.8495+08:00"
+    },
+    {
+      "test_name": "Decode @Ugy3L+2}TYgAAAABkAA",
+      "test_type": "accuracy",
+      "serial_code": "@Ugy3L+2}TYgAAAABkAAAAAB",
+      "expected_output": "UNKNOWN",
+      "actual_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAB",
+      "matches": false,
+      "error_type": "MissingExpectedValue",
+      "error_message": "No expected value found for serial code",
+      "processing_time_ns": 74583,
+      "timestamp": "2025-11-03T17:27:40.849576+08:00"
+    },
+    {
+      "test_name": "Decode @Ugy3L+2}TYgAAAABkAA",
+      "test_type": "accuracy",
+      "serial_code": "@Ugy3L+2}TYgAAAABkAAAAAC",
+      "expected_output": "UNKNOWN",
+      "actual_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAC",
+      "matches": false,
+      "error_type": "MissingExpectedValue",
+      "error_message": "No expected value found for serial code",
+      "processing_time_ns": 75875,
+      "timestamp": "2025-11-03T17:27:40.849658+08:00"
+    }
+  ],
+  "start_time": "2025-11-03T17:27:40.849358+08:00",
+  "end_time": "2025-11-03T17:27:40.849736+08:00",
+  "total_tests": 4,
+  "passed_tests": 0,
+  "failed_tests": 4,
+  "accuracy_rate": 0,
+  "average_time_ns": 75677,
+  "min_time_ns": 73792,
+  "max_time_ns": 78459
+}

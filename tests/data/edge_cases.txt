@@ -1,0 +1,8 @@
+# Edge cases test data set - boundary conditions and special cases
+# Generated: 2025-11-03 17:18:06
+# Count: 4
+
+@Ug
+@Ugy3L+2}TYgAAAABkAAAAAA
+@Ugy3L+2}TYgAAAABkAAAAAB
+@Ugy3L+2}TYgAAAABkAAAAAC

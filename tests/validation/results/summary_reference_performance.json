@@ -1,0 +1,12 @@
+{
+  "algorithm_name": "reference",
+  "test_name": "performance",
+  "total_tests": 1000,
+  "passed_tests": 1000,
+  "failed_tests": 0,
+  "accuracy_rate": 1,
+  "average_time_ns": 94,
+  "min_time_ns": 41,
+  "max_time_ns": 2000,
+  "timestamp": "2025-11-03T17:23:39.847199+08:00"
+}

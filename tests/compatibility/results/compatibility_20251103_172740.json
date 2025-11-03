@@ -1,0 +1,51 @@
+{
+  "suite_name": "Backward Compatibility Verification",
+  "description": "Ensure 100% backward compatibility between current and new implementations",
+  "test_results": [
+    {
+      "test_name": "Compat @Ug",
+      "serial_code": "@Ug",
+      "current_output": "decoded_@Ug",
+      "new_output": "decoded_@Ug",
+      "matches": true,
+      "processing_time_ns": 135292,
+      "timestamp": "2025-11-03T17:27:40.849967+08:00"
+    },
+    {
+      "test_name": "Compat @Ugy3L+2}TYgAAAABkAA",
+      "serial_code": "@Ugy3L+2}TYgAAAABkAAAAAA",
+      "current_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAA",
+      "new_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAA",
+      "matches": true,
+      "processing_time_ns": 138458,
+      "timestamp": "2025-11-03T17:27:40.850107+08:00"
+    },
+    {
+      "test_name": "Compat @Ugy3L+2}TYgAAAABkAA",
+      "serial_code": "@Ugy3L+2}TYgAAAABkAAAAAB",
+      "current_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAB",
+      "new_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAB",
+      "matches": true,
+      "processing_time_ns": 137875,
+      "timestamp": "2025-11-03T17:27:40.850248+08:00"
+    },
+    {
+      "test_name": "Compat @Ugy3L+2}TYgAAAABkAA",
+      "serial_code": "@Ugy3L+2}TYgAAAABkAAAAAC",
+      "current_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAC",
+      "new_output": "decoded_@Ugy3L+2}TYgAAAABkAAAAAC",
+      "matches": true,
+      "processing_time_ns": 123625,
+      "timestamp": "2025-11-03T17:27:40.850388+08:00"
+    }
+  ],
+  "start_time": "2025-11-03T17:27:40.849952+08:00",
+  "end_time": "2025-11-03T17:27:40.850514+08:00",
+  "total_tests": 4,
+  "compatible_tests": 4,
+  "incompatible_tests": 0,
+  "compatibility_rate": 1,
+  "average_time_ns": 133812,
+  "min_time_ns": 123625,
+  "max_time_ns": 138458
+}
